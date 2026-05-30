@@ -1,13 +1,10 @@
 stages:
-  - release
+  - build
 
 goreleaser:
-  stage: release
+  stage: build
   image: goreleaser/goreleaser:latest
   only:
     - tags
   script:
     - goreleaser release --clean
-  release:
-    tag_name: $CI_COMMIT_TAG
-    description: 'Release $CI_COMMIT_TAG'
