@@ -55,3 +55,6 @@ release:
     name: xrxs-cli
   draft: false
   prerelease: auto
+  extra_files:
+    - glob: ./scripts/install.sh
+    - glob: ./scripts/install.ps1
