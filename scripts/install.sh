@@ -7,23 +7,44 @@
 #
 # 环境变量:
 #   XRXS_VERSION     — 指定版本 (默认 latest)
-#   XRXS_INSTALL_DIR — 安装目录 (默认 ~/.local/bin)
+#   XRXS_INSTALL_DIR — 安装目录 (默认 /usr/local/bin, 不可写时回退到 ~/.local/bin)
 #   XRXS_NO_SKILLS   — 设为 1 跳过 Skill 安装
 
 set -eu
 
 REPO="LucyHeres/xrxs-cli"
 BIN_NAME="xrxs"
-DEFAULT_DIR="$HOME/.local/bin"
-INSTALL_DIR="${XRXS_INSTALL_DIR:-$DEFAULT_DIR}"
 VERSION="${XRXS_VERSION:-latest}"
 BASE_URL="${XRXS_BASE_URL:-https://github.com/${REPO}/releases}"
 NO_SKILLS="${XRXS_NO_SKILLS:-0}"
 
 say()  { printf '  %s\n' "$@"; }
-err()  { printf '  ❌ %s\n' "$@" >&2; exit 1; }
-warn() { printf '  ⚠️  %s\n' "$@" >&2; }
+err()  { printf '  \033[31m%s\033[0m\n' "$@" >&2; exit 1; }
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+# 选择安装目录：优先 /usr/local/bin (macOS/Linux 默认 PATH 内)
+pick_install_dir() {
+  if [ -n "${XRXS_INSTALL_DIR:-}" ]; then
+    mkdir -p "$XRXS_INSTALL_DIR" 2>/dev/null || true
+    if [ -w "$XRXS_INSTALL_DIR" ]; then
+      echo "$XRXS_INSTALL_DIR"
+      return
+    fi
+  fi
+
+  # 尝试 /usr/local/bin
+  if [ ! -d /usr/local/bin ]; then
+    mkdir -p /usr/local/bin 2>/dev/null || true
+  fi
+  if [ -w /usr/local/bin ]; then
+    echo "/usr/local/bin"
+    return
+  fi
+
+  # 回退到 ~/.local/bin
+  mkdir -p "$HOME/.local/bin" 2>/dev/null || true
+  echo "$HOME/.local/bin"
+}
 
 download() {
   url="$1"; dest="$2"
@@ -32,7 +53,7 @@ download() {
   elif need_cmd wget; then
     wget -qO "$dest" "$url"
   else
-    err "请安装 curl 或 wget 后重试"
+    err "安装失败: 系统缺少 curl 或 wget"
   fi
 }
 
@@ -41,14 +62,34 @@ detect_platform() {
   case "$(uname -s)" in
     Linux)  os="linux" ;;
     Darwin) os="darwin" ;;
-    *)      err "不支持的操作系统: $(uname -s)" ;;
+    *)      err "暂不支持当前操作系统" ;;
   esac
   case "$arch" in
     x86_64|amd64)  arch="amd64" ;;
     aarch64|arm64) arch="arm64" ;;
-    *)             err "不支持的 CPU 架构: $arch" ;;
+    *)             err "暂不支持当前 CPU 架构" ;;
   esac
   echo "${os}-${arch}"
+}
+
+# 确保 INSTALL_DIR 在 PATH 中（仅在回退到 ~/.local/bin 时需要）
+ensure_path() {
+  dir="$1"
+  # /usr/local/bin 已在系统 PATH，无需处理
+  case "$dir" in /usr/local/bin) return ;; esac
+
+  case ":$PATH:" in
+    *:"$dir":*) return ;;
+  esac
+
+  # 写入 shell 配置文件，新终端自动生效
+  for rc in "$HOME/.zshenv" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
+    if [ -f "$rc" ] || [ "$rc" = "$HOME/.zshenv" ] || [ "$rc" = "$HOME/.profile" ]; then
+      if ! grep -q "$dir" "$rc" 2>/dev/null; then
+        echo "export PATH=\"\$PATH:$dir\"" >> "$rc"
+      fi
+    fi
+  done
 }
 
 echo ""
@@ -58,20 +99,18 @@ echo "  ╚═══════════════════════
 echo ""
 
 PLATFORM="$(detect_platform)"
-say "检测到系统: $PLATFORM"
+say "系统: $PLATFORM"
 
 if [ "$VERSION" = "latest" ]; then
-  say "获取最新版本..."
   if need_cmd curl; then
     VERSION=$(curl -fsSL ${XRXS_INSECURE:+-k} "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)".*/\1/')
   fi
   if [ -z "$VERSION" ]; then
-    VERSION="dev"
-    warn "无法获取最新版本号"
+    err "获取版本信息失败，请检查网络连接"
   fi
 fi
-say "版本: $VERSION"
 
+INSTALL_DIR="$(pick_install_dir)"
 # 去掉 VERSION 开头的 v (API 返回 v0.1.2, 文件名是 0.1.2)
 VER="${VERSION#v}"
 ARCHIVE="xrxs_${VER}_${PLATFORM}.tar.gz"
@@ -79,39 +118,20 @@ DOWNLOAD_URL="${BASE_URL}/download/${VERSION}/${ARCHIVE}"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-say "下载 $DOWNLOAD_URL ..."
+say "正在下载 xrxs ${VERSION} ..."
 download "$DOWNLOAD_URL" "$TMP_DIR/$ARCHIVE"
 
-say "解压..."
+say "正在安装..."
 tar -xzf "$TMP_DIR/$ARCHIVE" -C "$TMP_DIR"
-
-mkdir -p "$INSTALL_DIR"
 cp "$TMP_DIR/$BIN_NAME" "$INSTALL_DIR/$BIN_NAME"
 chmod +x "$INSTALL_DIR/$BIN_NAME"
-say "已安装到: $INSTALL_DIR/$BIN_NAME"
 
-case ":$PATH:" in
-  *:"$INSTALL_DIR":*) ;;
-  *)
-    warn "$INSTALL_DIR 不在 PATH 中"
-    SHELL_RC=""
-    case "$SHELL" in
-      */zsh)  SHELL_RC="$HOME/.zshrc" ;;
-      */bash) SHELL_RC="$HOME/.bashrc" ;;
-      */fish) SHELL_RC="$HOME/.config/fish/config.fish" ;;
-    esac
-    if [ -n "$SHELL_RC" ]; then
-      echo "export PATH=\"\$PATH:$INSTALL_DIR\"" >> "$SHELL_RC"
-      say "已添加 PATH 到 $SHELL_RC (运行 source $SHELL_RC 生效)"
-    fi
-    ;;
-esac
+ensure_path "$INSTALL_DIR"
 
-# 安装 AI Agent Skills（覆盖所有主流 AI 编辑器）
+say "已安装: $INSTALL_DIR/$BIN_NAME"
+
+# 安装 AI Agent Skills
 if [ "$NO_SKILLS" != "1" ] && [ -f "$TMP_DIR/skills/xrxs/SKILL.md" ]; then
-  echo ""
-  say "安装 AI Agent Skills..."
-
   SKILL_SRC="$TMP_DIR/skills/xrxs/SKILL.md"
   INSTALLED=0
 
@@ -134,21 +154,16 @@ if [ "$NO_SKILLS" != "1" ] && [ -f "$TMP_DIR/skills/xrxs/SKILL.md" ]; then
     ".opencode/skills"
   do
     dest="$HOME/$agent_dir/xrxs/SKILL.md"
-    mkdir -p "$(dirname "$dest")"
-    if cp "$SKILL_SRC" "$dest" 2>/dev/null; then
-      say "  ✅ ~/$agent_dir/xrxs"
-      INSTALLED=$((INSTALLED + 1))
-    fi
+    mkdir -p "$(dirname "$dest")" 2>/dev/null || continue
+    cp "$SKILL_SRC" "$dest" 2>/dev/null || continue
+    INSTALLED=$((INSTALLED + 1))
   done
-
-  if [ "$INSTALLED" -gt 0 ]; then
-    say "Skills 已安装到 $INSTALLED 个 AI 编辑器 (Claude Code / Cursor / Trae / Codex / Windsurf ...)"
-  fi
 fi
 
 echo ""
-say "安装完成!"
+say "安装完成！"
 say ""
-say "  xrxs auth login --base-url https://your-company.example.com"
-say "  xrxs approval list search --status 0"
+say "  使用方法:"
+say "    xrxs auth login --base-url https://your-company.example.com"
+say "    xrxs approval list search --status 0"
 say ""
