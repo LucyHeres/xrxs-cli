@@ -30,7 +30,7 @@ func newAuthLoginCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "login",
 		Short: "登录到薪人薪事系统",
-		Long: `使用用户名和密码登录薪人薪事系统，保存认证会话供后续命令使用。
+		Long: `使用账号和密码登录薪人薪事系统，保存认证会话供后续命令使用。
 
 示例:
   xrxs auth login --base-url https://your-instance.example.com`,
@@ -60,14 +60,14 @@ func authLoginRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Print("用户名: ")
+	fmt.Print("账号: ")
 	username, err := readLine()
 	if err != nil {
-		return fmt.Errorf("读取用户名失败: %w", err)
+		return fmt.Errorf("读取账号失败: %w", err)
 	}
 	username = strings.TrimSpace(username)
 	if username == "" {
-		return fmt.Errorf("用户名不能为空")
+		return fmt.Errorf("账号不能为空")
 	}
 
 	fmt.Print("密码: ")
