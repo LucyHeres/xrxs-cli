@@ -30,7 +30,7 @@ xrxs upgrade
 
 ```bash
 # 1. 登录
-xrxs auth login --base-url https://your-company.example.com
+xrxs auth login --base-url https://s122.devtest.vip
 
 # 2. 查看审批中的审批（表格形式）
 xrxs approval list search --status 0 -f table
