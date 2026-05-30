@@ -53,8 +53,9 @@ func runUpgrade() error {
 	fmt.Println("正在下载...")
 
 	archiveName := fmt.Sprintf("xrxs_%s_%s-%s.tar.gz", latestVersion, runtime.GOOS, runtime.GOARCH)
-	downloadURL := fmt.Sprintf("https://github.com/LucyHeres/xrxs-cli/releases/download/%s/%s",
-		latest.TagName, archiveName)
+	gitlabHost := getGitLabHost()
+	downloadURL := fmt.Sprintf("https://%s/liuxin/xrxs-cli/-/releases/%s/downloads/%s",
+		gitlabHost, latest.TagName, archiveName)
 
 	tmpDir, err := os.MkdirTemp("", "xrxs-upgrade")
 	if err != nil {
@@ -107,16 +108,25 @@ type githubRelease struct {
 	TagName string `json:"tag_name"`
 }
 
+func getGitLabHost() string {
+	if h := os.Getenv("XRXS_GITLAB_HOST"); h != "" {
+		return h
+	}
+	return "code.qijiayoudao.net"
+}
+
 func fetchLatestRelease() (*githubRelease, error) {
 	apiURL := os.Getenv("XRXS_UPGRADE_API")
 	if apiURL == "" {
-		apiURL = "https://api.github.com/repos/LucyHeres/xrxs-cli/releases/latest"
+		apiURL = fmt.Sprintf("https://%s/api/v4/projects/liuxin%%2Fxrxs-cli/releases?per_page=1", getGitLabHost())
 	}
 
 	client := &http.Client{Timeout: upgradeTimeout}
 	req, _ := http.NewRequest("GET", apiURL, nil)
 	req.Header.Set("User-Agent", "xrxs-cli-upgrade")
-	req.Header.Set("Accept", "application/vnd.github+json")
+	if token := os.Getenv("GITLAB_TOKEN"); token != "" {
+		req.Header.Set("PRIVATE-TOKEN", token)
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -125,21 +135,28 @@ func fetchLatestRelease() (*githubRelease, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 403 || resp.StatusCode == 429 {
-		return nil, fmt.Errorf("GitHub API 频率限制，请稍后重试")
+		return nil, fmt.Errorf("GitLab API 频率限制，请稍后重试")
 	}
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("GitHub API 返回 HTTP %d", resp.StatusCode)
+		return nil, fmt.Errorf("GitLab API 返回 HTTP %d", resp.StatusCode)
 	}
 
-	var release githubRelease
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+	var releases []githubRelease
+	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
 		return nil, fmt.Errorf("解析版本信息失败: %w", err)
 	}
-	return &release, nil
+	if len(releases) == 0 {
+		return nil, fmt.Errorf("未找到任何发布版本")
+	}
+	return &releases[0], nil
 }
 
 func downloadFile(url, dest string) error {
-	resp, err := http.Get(url)
+	req, _ := http.NewRequest("GET", url, nil)
+	if token := os.Getenv("GITLAB_TOKEN"); token != "" {
+		req.Header.Set("PRIVATE-TOKEN", token)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}

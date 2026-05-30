@@ -3,19 +3,23 @@
 # 适用于 macOS / Linux
 #
 # 用法:
-#   curl -fsSL https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh | sh
+#   curl -fsSL https://code.qijiayoudao.net/liuxin/xrxs-cli/-/releases/latest/downloads/install.sh | sh
 #
 # 环境变量:
 #   XRXS_VERSION     — 指定版本 (默认 latest)
 #   XRXS_INSTALL_DIR — 安装目录 (默认 /usr/local/bin, 不可写时回退到 ~/.local/bin)
 #   XRXS_NO_SKILLS   — 设为 1 跳过 Skill 安装
+#   GITLAB_TOKEN     — GitLab 访问令牌 (访问私有仓库时需要)
 
 set -eu
 
-REPO="LucyHeres/xrxs-cli"
+GITLAB_HOST="code.qijiayoudao.net"
+REPO="liuxin/xrxs-cli"
+REPO_ENCODED="liuxin%2Fxrxs-cli"
 BIN_NAME="xrxs"
 VERSION="${XRXS_VERSION:-latest}"
-BASE_URL="${XRXS_BASE_URL:-https://github.com/${REPO}/releases}"
+GITLAB_API="https://${GITLAB_HOST}/api/v4"
+BASE_URL="https://${GITLAB_HOST}/${REPO}"
 NO_SKILLS="${XRXS_NO_SKILLS:-0}"
 
 say()  { printf '  %s\n' "$@"; }
@@ -48,12 +52,20 @@ pick_install_dir() {
 
 download() {
   url="$1"; dest="$2"
-  if need_cmd curl; then
-    curl -fsSL ${XRXS_INSECURE:+-k} "$url" -o "$dest"
-  elif need_cmd wget; then
-    wget -qO "$dest" "$url"
+  if [ -n "${GITLAB_TOKEN:-}" ]; then
+    if need_cmd curl; then
+      curl -fsSL ${XRXS_INSECURE:+-k} -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" "$url" -o "$dest"
+    elif need_cmd wget; then
+      wget -qO "$dest" --header="PRIVATE-TOKEN: ${GITLAB_TOKEN}" "$url"
+    fi
   else
-    err "安装失败: 系统缺少 curl 或 wget"
+    if need_cmd curl; then
+      curl -fsSL ${XRXS_INSECURE:+-k} "$url" -o "$dest"
+    elif need_cmd wget; then
+      wget -qO "$dest" "$url"
+    else
+      err "安装失败: 系统缺少 curl 或 wget"
+    fi
   fi
 }
 
@@ -103,18 +115,23 @@ say "系统: $PLATFORM"
 
 if [ "$VERSION" = "latest" ]; then
   if need_cmd curl; then
-    VERSION=$(curl -fsSL ${XRXS_INSECURE:+-k} "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)".*/\1/')
+    AUTH_HEADER=""
+    if [ -n "${GITLAB_TOKEN:-}" ]; then
+      AUTH_HEADER="--header PRIVATE-TOKEN: ${GITLAB_TOKEN}"
+    fi
+    VERSION=$(curl -fsSL ${XRXS_INSECURE:+-k} ${AUTH_HEADER:+-H "PRIVATE-TOKEN: ${GITLAB_TOKEN}"} "${GITLAB_API}/projects/${REPO_ENCODED}/releases?per_page=1" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')
   fi
   if [ -z "$VERSION" ]; then
-    err "获取版本信息失败，请检查网络连接"
+    err "获取版本信息失败，请检查网络连接或设置 GITLAB_TOKEN"
   fi
 fi
 
-INSTALL_DIR="$(pick_install_dir)"
-# 去掉 VERSION 开头的 v (API 返回 v0.1.2, 文件名是 0.1.2)
+# GitLab release download URL
+DOWNLOAD_PATH="/${REPO}/-/releases/${VERSION}/downloads"
+# 去掉 VERSION 开头的 v (API 返回 v0.3.0, 文件名是 0.3.0)
 VER="${VERSION#v}"
 ARCHIVE="xrxs_${VER}_${PLATFORM}.tar.gz"
-DOWNLOAD_URL="${BASE_URL}/download/${VERSION}/${ARCHIVE}"
+DOWNLOAD_URL="https://${GITLAB_HOST}${DOWNLOAD_PATH}/${ARCHIVE}"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
@@ -123,6 +140,7 @@ download "$DOWNLOAD_URL" "$TMP_DIR/$ARCHIVE"
 
 say "正在安装..."
 tar -xzf "$TMP_DIR/$ARCHIVE" -C "$TMP_DIR"
+INSTALL_DIR="$(pick_install_dir)"
 cp "$TMP_DIR/$BIN_NAME" "$INSTALL_DIR/$BIN_NAME"
 chmod +x "$INSTALL_DIR/$BIN_NAME"
 

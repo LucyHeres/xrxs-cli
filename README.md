@@ -7,13 +7,13 @@
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh | sh
+curl -fsSL https://code.qijiayoudao.net/liuxin/xrxs-cli/-/releases/latest/downloads/install.sh | sh
 ```
 
 **Windows PowerShell**
 
 ```powershell
-irm https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.ps1 | iex
+irm https://code.qijiayoudao.net/liuxin/xrxs-cli/-/releases/latest/downloads/install.ps1 | iex
 ```
 
 安装完成后，打开新终端窗口即可使用。
@@ -24,7 +24,7 @@ irm https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.ps1 |
 xrxs auth login --base-url https://s122.devtest.vip
 ```
 
-按提示输入用户名和密码。登录成功后，在 Claude Code 中输入 `/xrxs` 即可通过自然语言操作审批。
+按提示输入账号和密码。登录成功后，在 Claude Code 中输入 `/xrxs` 即可通过自然语言操作审批。
 
 ## 升级
 
