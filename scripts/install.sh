@@ -72,7 +72,9 @@ if [ "$VERSION" = "latest" ]; then
 fi
 say "版本: $VERSION"
 
-ARCHIVE="xrxs_${VERSION}_${PLATFORM}.tar.gz"
+# 去掉 VERSION 开头的 v (API 返回 v0.1.2, 文件名是 0.1.2)
+VER="${VERSION#v}"
+ARCHIVE="xrxs_${VER}_${PLATFORM}.tar.gz"
 DOWNLOAD_URL="${BASE_URL}/download/${VERSION}/${ARCHIVE}"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
