@@ -171,7 +171,7 @@ func (b *Builder) buildBodyMap(t *schema.Tool, cmd *cobra.Command) map[string]an
 func (b *Builder) buildTemplateValues(t *schema.Tool, cmd *cobra.Command) map[string]any {
 	values := make(map[string]any)
 	for _, p := range t.Params {
-		values[p.Name] = getFlagValue(cmd, p)
+		values[p.APIName()] = getFlagValue(cmd, p)
 	}
 
 	// Always compute start from page+pageSize (even if using defaults)
@@ -208,7 +208,7 @@ func (b *Builder) buildFormParams(t *schema.Tool, cmd *cobra.Command) url.Values
 	for _, p := range t.Params {
 		val := getParamValue(cmd, p)
 		if val != "" || p.Required {
-			params.Set(p.Name, val)
+			params.Set(p.APIName(), val)
 		}
 	}
 	return params

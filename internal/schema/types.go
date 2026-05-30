@@ -43,6 +43,15 @@ type Param struct {
 	Description string      `json:"description,omitempty"` // Help text
 	Required    bool        `json:"required,omitempty"`
 	InBody      bool        `json:"inBody,omitempty"` // If true, goes into request body (POSTFormJSON)
+	QueryName   string      `json:"queryName,omitempty"` // API param name when different from flag name
+}
+
+// APIName returns the parameter name to use in API requests.
+func (p Param) APIName() string {
+	if p.QueryName != "" {
+		return p.QueryName
+	}
+	return p.Name
 }
 
 // IsLeaf returns true if this tool is a leaf command (executes an API call).
