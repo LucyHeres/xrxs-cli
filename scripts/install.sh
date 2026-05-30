@@ -7,7 +7,7 @@
 #
 # 环境变量:
 #   XRXS_VERSION     — 指定版本 (默认 latest)
-#   XRXS_INSTALL_DIR — 安装目录 (默认 /usr/local/bin, 不可写时回退到 ~/.local/bin)
+#   XRXS_INSTALL_DIR — 安装目录 (默认 /usr/local/bin, 不可写时尝试 sudo, 最终回退到 ~/.local/bin)
 #   XRXS_NO_SKILLS   — 设为 1 跳过 Skill 安装
 
 set -eu
@@ -22,24 +22,55 @@ say()  { printf '  %s\n' "$@"; }
 err()  { printf '  \033[31m%s\033[0m\n' "$@" >&2; exit 1; }
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
 
-pick_install_dir() {
+install_binary() {
+  src="$1"
+
+  # 1. 用户指定了安装目录
   if [ -n "${XRXS_INSTALL_DIR:-}" ]; then
     mkdir -p "$XRXS_INSTALL_DIR" 2>/dev/null || true
     if [ -w "$XRXS_INSTALL_DIR" ]; then
+      cp "$src" "$XRXS_INSTALL_DIR/$BIN_NAME"
+      chmod +x "$XRXS_INSTALL_DIR/$BIN_NAME"
       echo "$XRXS_INSTALL_DIR"
       return
     fi
+    err "安装目录 $XRXS_INSTALL_DIR 不可写"
   fi
 
-  if [ ! -d /usr/local/bin ]; then
-    mkdir -p /usr/local/bin 2>/dev/null || true
-  fi
+  # 2. 优先 /usr/local/bin (macOS/Linux 系统默认 PATH)
+  mkdir -p /usr/local/bin 2>/dev/null || true
   if [ -w /usr/local/bin ]; then
+    cp "$src" /usr/local/bin/$BIN_NAME
+    chmod +x /usr/local/bin/$BIN_NAME
     echo "/usr/local/bin"
     return
   fi
 
+  # 3. 不可写时尝试 sudo
+  if command -v sudo >/dev/null 2>&1; then
+    sudo cp "$src" /usr/local/bin/$BIN_NAME
+    sudo chmod +x /usr/local/bin/$BIN_NAME
+    echo "/usr/local/bin"
+    return
+  fi
+
+  # 4. 最终回退: ~/.local/bin
   mkdir -p "$HOME/.local/bin" 2>/dev/null || true
+  cp "$src" "$HOME/.local/bin/$BIN_NAME"
+  chmod +x "$HOME/.local/bin/$BIN_NAME"
+
+  case ":$PATH:" in
+    *:"$HOME/.local/bin":*) ;;
+    *)
+      for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.profile"; do
+        if [ -w "$rc" ] 2>/dev/null || [ ! -f "$rc" ]; then
+          grep -q "$HOME/.local/bin" "$rc" 2>/dev/null && continue
+          echo "export PATH=\"\$PATH:\$HOME/.local/bin\"" >> "$rc" 2>/dev/null || true
+        fi
+      done
+      ;;
+  esac
+
   echo "$HOME/.local/bin"
 }
 
@@ -69,21 +100,6 @@ detect_platform() {
   echo "${os}-${arch}"
 }
 
-ensure_path() {
-  dir="$1"
-  case "$dir" in /usr/local/bin) return ;; esac
-
-  case ":$PATH:" in
-    *:"$dir":*) return ;;
-  esac
-
-  for rc in "$HOME/.zshenv" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
-    [ -w "$rc" ] || [ ! -f "$rc" ] || continue
-    if ! grep -q "$dir" "$rc" 2>/dev/null; then
-      echo "export PATH=\"\$PATH:$dir\"" >> "$rc" 2>/dev/null || true
-    fi
-  done
-}
 
 echo ""
 echo "  ╔══════════════════════════════════════╗"
@@ -114,11 +130,7 @@ download "$DOWNLOAD_URL" "$TMP_DIR/$ARCHIVE"
 
 say "正在安装..."
 tar -xzf "$TMP_DIR/$ARCHIVE" -C "$TMP_DIR"
-INSTALL_DIR="$(pick_install_dir)"
-cp "$TMP_DIR/$BIN_NAME" "$INSTALL_DIR/$BIN_NAME"
-chmod +x "$INSTALL_DIR/$BIN_NAME"
-
-ensure_path "$INSTALL_DIR"
+INSTALL_DIR="$(install_binary "$TMP_DIR/$BIN_NAME")"
 
 say "已安装: $INSTALL_DIR/$BIN_NAME"
 
