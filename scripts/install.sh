@@ -84,10 +84,10 @@ ensure_path() {
 
   # 写入 shell 配置文件，新终端自动生效
   for rc in "$HOME/.zshenv" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
-    if [ -f "$rc" ] || [ "$rc" = "$HOME/.zshenv" ] || [ "$rc" = "$HOME/.profile" ]; then
-      if ! grep -q "$dir" "$rc" 2>/dev/null; then
-        echo "export PATH=\"\$PATH:$dir\"" >> "$rc"
-      fi
+    # 跳过不可写的文件
+    [ -w "$rc" ] || [ ! -f "$rc" ] || continue
+    if ! grep -q "$dir" "$rc" 2>/dev/null; then
+      echo "export PATH=\"\$PATH:$dir\"" >> "$rc" 2>/dev/null || true
     fi
   done
 }
