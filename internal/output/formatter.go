@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-	"text/tabwriter"
+	"unicode/utf8"
 
 	"github.com/itchyny/gojq"
 )
@@ -75,35 +75,89 @@ func WriteTable(w io.Writer, v any) error {
 	}
 	sort.Strings(cols)
 
-	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-
+	// Build header and all rows as strings
+	rows := make([][]string, 0, len(list)+1)
+	header := make([]string, len(cols))
 	for i, col := range cols {
-		if i > 0 {
-			fmt.Fprint(tw, "\t")
-		}
-		fmt.Fprint(tw, strings.ToUpper(col))
+		header[i] = col
 	}
-	fmt.Fprintln(tw)
+	rows = append(rows, header)
 
 	for _, item := range list {
+		row := make([]string, len(cols))
 		for i, col := range cols {
-			if i > 0 {
-				fmt.Fprint(tw, "\t")
-			}
 			val := item[col]
 			if val == nil {
 				val = ""
 			}
 			s := fmt.Sprintf("%v", val)
-			if len(s) > 80 {
-				s = s[:77] + "..."
-			}
-			fmt.Fprint(tw, s)
+			row[i] = s
 		}
-		fmt.Fprintln(tw)
+		rows = append(rows, row)
 	}
 
-	return tw.Flush()
+	// Calculate display width for each column
+	colWidths := make([]int, len(cols))
+	for _, row := range rows {
+		for i, cell := range row {
+			w := displayWidth(cell)
+			if w > colWidths[i] {
+				colWidths[i] = w
+			}
+		}
+	}
+
+	// Write with proper padding
+	sep := "  "
+	for _, row := range rows {
+		for i, cell := range row {
+			if i > 0 {
+				fmt.Fprint(w, sep)
+			}
+			fmt.Fprint(w, cell)
+			pad := colWidths[i] - displayWidth(cell)
+			if i < len(row)-1 {
+				fmt.Fprint(w, strings.Repeat(" ", pad))
+			}
+		}
+		fmt.Fprintln(w)
+	}
+
+	return nil
+}
+
+// displayWidth returns the visual width: ASCII=1, CJK=2.
+func displayWidth(s string) int {
+	w := 0
+	for _, r := range s {
+		if isWide(r) {
+			w += 2
+		} else {
+			w++
+		}
+	}
+	if w == 0 && s != "" {
+		// Fallback for non-UTF8
+		return utf8.RuneCountInString(s)
+	}
+	return w
+}
+
+func isWide(r rune) bool {
+	if r < 128 {
+		return false
+	}
+	// CJK Unified Ideographs, CJK Compatibility, Hiragana, Katakana, Fullwidth
+	return (r >= 0x1100 && r <= 0x115F) || // Hangul
+		(r >= 0x2E80 && r <= 0xA4CF) || // CJK Radicals ~ Yi
+		(r >= 0xAC00 && r <= 0xD7A3) || // Hangul Syllables
+		(r >= 0xF900 && r <= 0xFAFF) || // CJK Compatibility
+		(r >= 0xFE10 && r <= 0xFE19) || // Vertical forms
+		(r >= 0xFE30 && r <= 0xFE6F) || // CJK Compatibility Forms
+		(r >= 0xFF00 && r <= 0xFF60) || // Fullwidth Forms
+		(r >= 0xFFE0 && r <= 0xFFE6) || // Fullwidth Signs
+		(r >= 0x20000 && r <= 0x2FFFD) || // CJK Extension B+
+		(r >= 0x30000 && r <= 0x3FFFD) // CJK Extension G+
 }
 
 // WriteCommandPayload writes the output in the specified format with unwrap and filtering.
@@ -277,7 +331,12 @@ func writeKeyValue(w io.Writer, v any) {
 		return
 	}
 	rt := rv.Type()
-	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	maxKeyWidth := 0
+	type kv struct {
+		key string
+		val string
+	}
+	var pairs []kv
 	for i := 0; i < rt.NumField(); i++ {
 		field := rt.Field(i)
 		val := rv.Field(i).Interface()
@@ -288,7 +347,15 @@ func writeKeyValue(w io.Writer, v any) {
 				name = parts[0]
 			}
 		}
-		fmt.Fprintf(tw, "%s:\t%v\n", name, val)
+		valStr := fmt.Sprintf("%v", val)
+		pairs = append(pairs, kv{key: name, val: valStr})
+		w := displayWidth(name)
+		if w > maxKeyWidth {
+			maxKeyWidth = w
+		}
 	}
-	tw.Flush()
+	for _, p := range pairs {
+		pad := maxKeyWidth - displayWidth(p.key)
+		fmt.Fprintf(w, "%s:%s  %s\n", p.key, strings.Repeat(" ", pad), p.val)
+	}
 }
