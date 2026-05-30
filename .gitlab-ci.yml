@@ -1,10 +1,11 @@
 stages:
-  - build
+  - release
 
 goreleaser:
-  stage: build
-  image: goreleaser/goreleaser:latest
+  stage: release
+  tags:
+    - nvm
   only:
     - tags
   script:
-    - goreleaser release --clean
+    - curl -fsSL https://goreleaser.com/static/run | bash -s -- release --clean
