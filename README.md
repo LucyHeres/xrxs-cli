@@ -34,6 +34,19 @@ xrxs upgrade
 
 自动检查并更新到最新版本。
 
+## 卸载
+
+```bash
+xrxs uninstall
+```
+
+或手动删除：
+
+```bash
+rm -f ~/.local/bin/xrxs /usr/local/bin/xrxs
+rm -rf ~/.xrxs
+```
+
 ## License
 
 MIT

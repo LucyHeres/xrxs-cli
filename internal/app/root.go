@@ -81,7 +81,7 @@ func newRootCommand() *cobra.Command {
 	root.PersistentFlags().BoolP("yes", "y", false, "跳过确认提示")
 	root.PersistentFlags().Bool("dry-run", false, "预览操作但不执行")
 
-	root.AddCommand(newAuthCommand(), newVersionCommand(), newUpgradeCommand())
+	root.AddCommand(newAuthCommand(), newVersionCommand(), newUpgradeCommand(), newUninstallCommand())
 
 	// Load schema and build dynamic commands
 	manifest, err := loadManifest()
