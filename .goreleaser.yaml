@@ -53,5 +53,5 @@ release:
   github:
     owner: LucyHeres
     name: xrxs-cli
-  draft: true
+  draft: false
   prerelease: auto
