@@ -1,0 +1,57 @@
+# GoReleaser configuration for xrxs-cli
+# Build: goreleaser release --clean
+
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: xrxs
+    main: ./cmd
+    binary: xrxs
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X 'github.com/LucyHeres/xrxs-cli/internal/app.version={{ .Version }}'
+      - -X 'github.com/LucyHeres/xrxs-cli/internal/app.buildTime={{ .Date }}'
+      - -X 'github.com/LucyHeres/xrxs-cli/internal/app.gitCommit={{ .Commit }}'
+
+archives:
+  - id: default
+    formats: ["tar.gz", "zip"]
+    name_template: "xrxs_{{ .Version }}_{{ .Os }}-{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+      - skills/**/*
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-dev"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+
+release:
+  github:
+    owner: LucyHeres
+    name: xrxs-cli
+  draft: true
+  prerelease: auto
