@@ -52,8 +52,8 @@ release-local:
 	GOOS=windows GOARCH=amd64 $(GO) build -ldflags "$(LDFLAGS)" -o dist/xrxs_windows_amd64/xrxs.exe ./cmd
 	GOOS=windows GOARCH=386   $(GO) build -ldflags "$(LDFLAGS)" -o dist/xrxs_windows_386/xrxs.exe ./cmd
 	@echo "Packaging..."
-	cd dist && for d in */; do tar -czf "xrxs_$$(VERSION)_$${d%/}.tar.gz" -C "$$d" . 2>/dev/null; done
-	cd dist && for d in */; do zip -qr "xrxs_$$(VERSION)_$${d%/}.zip" "$$d" 2>/dev/null; done
+	cd dist && for d in */; do tar -czf "xrxs_$(VERSION)_$${d%/}.tar.gz" -C "$$d" . 2>/dev/null; done
+	cd dist && for d in */; do zip -qr "xrxs_$(VERSION)_$${d%/}.zip" "$$d" 2>/dev/null; done
 	cd dist && sha256sum *.tar.gz *.zip > checksums.txt 2>/dev/null || shasum -a 256 *.tar.gz *.zip > checksums.txt
 	@echo "Done. Artifacts in dist/"
 

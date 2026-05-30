@@ -36,18 +36,21 @@ type OutputSpec struct {
 }
 
 // Param describes a CLI flag that maps to an API parameter.
+// Name is the API parameter name in camelCase (e.g. "flowStepId").
+// The CLI flag name is auto-derived from Name via toKebabCase conversion in the builder.
 type Param struct {
-	Name        string      `json:"name"`                  // Flag name: "keyword"
+	Name        string      `json:"name"`                  // API parameter name (camelCase)
 	Short       string      `json:"short,omitempty"`       // Short flag: "k"
 	Type        string      `json:"type"`                  // "string", "int", "bool"
 	Default     interface{} `json:"default,omitempty"`     // Default value
 	Description string      `json:"description,omitempty"` // Help text
 	Required    bool        `json:"required,omitempty"`
 	InBody      bool        `json:"inBody,omitempty"` // If true, goes into request body (POSTFormJSON)
-	QueryName   string      `json:"queryName,omitempty"` // API param name when different from flag name
+	QueryName   string      `json:"queryName,omitempty"` // API param name override, only needed when semantically different from Name
 }
 
 // APIName returns the parameter name to use in API requests.
+// If QueryName is set, use it directly. Otherwise, Name is already the correct camelCase API name.
 func (p Param) APIName() string {
 	if p.QueryName != "" {
 		return p.QueryName

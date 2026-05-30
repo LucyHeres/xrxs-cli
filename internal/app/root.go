@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"github.com/LucyHeres/xrxs-cli/internal/auth"
 	"github.com/LucyHeres/xrxs-cli/internal/cli"
@@ -46,6 +47,7 @@ func loadManifest() (*schema.Manifest, error) {
 
 // Execute is the main entry point, called from cmd/main.go.
 func Execute() int {
+	normalizeFlagAliases()
 	root := newRootCommand()
 	err := root.Execute()
 	if err != nil {
@@ -191,6 +193,72 @@ func readLine() (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(line), nil
+}
+
+// normalizeFlagAliases rewrites os.Args so that camelCase, PascalCase, and
+// snake_case flag names are accepted as aliases for the canonical kebab-case
+// form. This runs before cobra parses the args, so the user can type
+// --flowStepId or --flow_step_id and both resolve to --flow-step-id.
+func normalizeFlagAliases() {
+	args := make([]string, len(os.Args))
+	copy(args, os.Args)
+
+	for i := 1; i < len(args); i++ {
+		arg := args[i]
+		if !strings.HasPrefix(arg, "--") || arg == "--" {
+			continue
+		}
+
+		bare := arg[2:]
+
+		// Handle --flag=value syntax
+		var suffix string
+		if idx := strings.IndexByte(bare, '='); idx >= 0 {
+			suffix = bare[idx:]
+			bare = bare[:idx]
+		}
+
+		// Already kebab-case — skip
+		normalized := normalizeToKebab(bare)
+		if normalized == bare {
+			continue
+		}
+
+		args[i] = "--" + normalized + suffix
+	}
+
+	os.Args = args
+}
+
+// normalizeToKebab converts camelCase, PascalCase, or snake_case to kebab-case.
+func normalizeToKebab(s string) string {
+	if s == "" {
+		return s
+	}
+	var b strings.Builder
+	b.Grow(len(s) + 4)
+
+	runes := []rune(s)
+	for i, r := range runes {
+		if r == '_' || r == ' ' {
+			if b.Len() > 0 {
+				b.WriteByte('-')
+			}
+			continue
+		}
+
+		if unicode.IsUpper(r) && i > 0 {
+			prev := runes[i-1]
+			if unicode.IsLower(prev) {
+				b.WriteByte('-')
+			} else if unicode.IsUpper(prev) && i+1 < len(runes) && unicode.IsLower(runes[i+1]) {
+				b.WriteByte('-')
+			}
+		}
+		b.WriteRune(unicode.ToLower(r))
+	}
+
+	return strings.Trim(b.String(), "-")
 }
 
 func newVersionCommand() *cobra.Command {

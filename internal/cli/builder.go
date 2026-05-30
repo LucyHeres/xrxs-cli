@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"text/template"
+	"unicode"
 
 	"github.com/LucyHeres/xrxs-cli/internal/client"
 	"github.com/LucyHeres/xrxs-cli/internal/output"
@@ -66,7 +67,7 @@ func (b *Builder) buildLeaf(t *schema.Tool) *cobra.Command {
 
 	for i := range t.Params {
 		p := &t.Params[i]
-		flagName := p.Name
+		flagName := toKebabCase(p.Name) // CLI flag: kebab-case; API name: camelCase
 		switch p.Type {
 		case "string":
 			def := ""
@@ -177,7 +178,7 @@ func (b *Builder) buildTemplateValues(t *schema.Tool, cmd *cobra.Command) map[st
 	// Always compute start from page+pageSize (even if using defaults)
 	if _, hasPage := values["page"]; hasPage {
 		page := toInt(values["page"])
-		pageSize := toInt(values["page-size"])
+		pageSize := toInt(values["pageSize"])
 		if pageSize < 1 {
 			pageSize = 20
 		}
@@ -255,30 +256,32 @@ func resolveTemplatesAny(v any, values map[string]any) any {
 // --- helpers ---
 
 func getParamValue(cmd *cobra.Command, p schema.Param) string {
+	flagName := toKebabCase(p.Name)
 	switch p.Type {
 	case "int":
-		v, _ := cmd.Flags().GetInt(p.Name)
+		v, _ := cmd.Flags().GetInt(flagName)
 		return fmt.Sprintf("%d", v)
 	case "string":
-		v, _ := cmd.Flags().GetString(p.Name)
+		v, _ := cmd.Flags().GetString(flagName)
 		return v
 	case "bool":
-		v, _ := cmd.Flags().GetBool(p.Name)
+		v, _ := cmd.Flags().GetBool(flagName)
 		return fmt.Sprintf("%t", v)
 	}
 	return ""
 }
 
 func getFlagValue(cmd *cobra.Command, p schema.Param) any {
+	flagName := toKebabCase(p.Name)
 	switch p.Type {
 	case "int":
-		v, _ := cmd.Flags().GetInt(p.Name)
+		v, _ := cmd.Flags().GetInt(flagName)
 		return v
 	case "string":
-		v, _ := cmd.Flags().GetString(p.Name)
+		v, _ := cmd.Flags().GetString(flagName)
 		return v
 	case "bool":
-		v, _ := cmd.Flags().GetBool(p.Name)
+		v, _ := cmd.Flags().GetBool(flagName)
 		return v
 	}
 	return nil
@@ -290,6 +293,23 @@ func getIntValue(cmd *cobra.Command, name string) (int, bool) {
 		return v, true
 	}
 	return 0, false
+}
+
+// toKebabCase converts a camelCase string to kebab-case for use as a CLI flag name.
+// e.g. "flowStepId" -> "flow-step-id", "sid" -> "sid".
+func toKebabCase(s string) string {
+	var b strings.Builder
+	for i, r := range s {
+		if unicode.IsUpper(r) {
+			if i > 0 {
+				b.WriteByte('-')
+			}
+			b.WriteRune(unicode.ToLower(r))
+		} else {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
 
 func unwrapByPath(v any, path string) any {
