@@ -15,7 +15,20 @@
               "path": "/approve/service/ajax-get-approve-list",
               "method": "POST",
               "encoding": "form-nested",
-              "output": {"unwrap": "data.result.data"},
+              "output": {
+                "unwrap": "data.result.data",
+                "labels": {
+                  "sid": "审批ID",
+                  "employeeName": "发起人",
+                  "flowName": "审批类型",
+                  "title": "标题",
+                  "addDate": "提交时间",
+                  "approveName": "当前审批人",
+                  "statusName": "状态",
+                  "departmentName": "部门",
+                  "flowNumber": "审批编号"
+                }
+              },
               "params": [
                 {"name": "keyword", "type": "string", "default": "", "description": "搜索关键词", "inBody": true},
                 {"name": "status", "type": "string", "default": "", "description": "审批状态: 0=审批中, 1=已通过, 2=已驳回, 3=已撤销", "inBody": true},
@@ -484,6 +497,15 @@
               "path": "/approve/service/ajax-get-flow-group",
               "method": "GET",
               "encoding": "form",
+              "output": {
+                "labels": {
+                  "groupName": "分组名称",
+                  "groupId": "分组ID",
+                  "groupEnName": "英文名称",
+                  "isFixed": "是否固定",
+                  "orderNum": "排序"
+                }
+              },
               "params": []
             },
             {
@@ -515,6 +537,16 @@
               "path": "/approve/service/ajax-get-flow-setting",
               "method": "GET",
               "encoding": "form",
+              "output": {
+                "labels": {
+                  "name": "名称",
+                  "flowSettingId": "类型ID",
+                  "flowType": "流程类型",
+                  "openStatus": "启用状态",
+                  "complete": "是否完整",
+                  "type": "自定义"
+                }
+              },
               "params": [
                 {"name": "group-id", "type": "string", "default": "", "description": "审批分组 ID", "queryName": "groupId"}
               ]

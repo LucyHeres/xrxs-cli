@@ -69,7 +69,7 @@ func TestWriteTable(t *testing.T) {
 		{"name": "张三", "status": "通过"},
 		{"name": "李四", "status": "待审批"},
 	}
-	err := WriteTable(&buf, data)
+	err := WriteTable(&buf, data, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,8 +77,8 @@ func TestWriteTable(t *testing.T) {
 	if output == "" {
 		t.Fatal("expected non-empty table output")
 	}
-	if !contains(output, "NAME") || !contains(output, "STATUS") {
-		t.Errorf("expected NAME and STATUS in output, got: %s", output)
+	if !contains(output, "name") || !contains(output, "status") {
+		t.Errorf("expected name and status in output, got: %s", output)
 	}
 }
 

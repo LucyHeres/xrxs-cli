@@ -147,7 +147,7 @@ func (b *Builder) createRunE(t *schema.Tool) func(*cobra.Command, []string) erro
 			parsed = unwrapByPath(parsed, t.Output.Unwrap)
 		}
 
-		return output.WriteCommandPayload(format, parsed, fields, jqExpr)
+		return output.WriteCommandPayload(format, parsed, fields, jqExpr, t.Output.Labels)
 	}
 }
 

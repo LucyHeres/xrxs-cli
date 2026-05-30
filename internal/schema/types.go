@@ -31,7 +31,8 @@ type Tool struct {
 
 // OutputSpec describes how to process the API response.
 type OutputSpec struct {
-	Unwrap string `json:"unwrap,omitempty"` // "data.result.data" or "" for direct output
+	Unwrap string            `json:"unwrap,omitempty"` // "data.result.data" or "" for direct output
+	Labels map[string]string `json:"labels,omitempty"` // Field name → display name (e.g. "employeeName": "发起人")
 }
 
 // Param describes a CLI flag that maps to an API parameter.

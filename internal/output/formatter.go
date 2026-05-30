@@ -54,8 +54,8 @@ func WriteRaw(w io.Writer, v any) error {
 	return err
 }
 
-// WriteTable writes v as an aligned table to w.
-func WriteTable(w io.Writer, v any) error {
+// WriteTable writes v as an aligned table to w, using labels for column headers.
+func WriteTable(w io.Writer, v any, labels map[string]string) error {
 	list := extractList(v)
 	if len(list) == 0 {
 		writeKeyValue(w, v)
@@ -79,7 +79,11 @@ func WriteTable(w io.Writer, v any) error {
 	rows := make([][]string, 0, len(list)+1)
 	header := make([]string, len(cols))
 	for i, col := range cols {
-		header[i] = col
+		if label, ok := labels[col]; ok && label != "" {
+			header[i] = label
+		} else {
+			header[i] = col
+		}
 	}
 	rows = append(rows, header)
 
@@ -161,7 +165,7 @@ func isWide(r rune) bool {
 }
 
 // WriteCommandPayload writes the output in the specified format with unwrap and filtering.
-func WriteCommandPayload(format Format, data any, fields string, jqExpr string) error {
+func WriteCommandPayload(format Format, data any, fields string, jqExpr string, labels map[string]string) error {
 	// Step 1: Unwrap nested response
 	data = unwrapResponse(data)
 
@@ -184,7 +188,7 @@ func WriteCommandPayload(format Format, data any, fields string, jqExpr string) 
 	case FormatJSON:
 		return WriteJSON(os.Stdout, data)
 	case FormatTable:
-		return WriteTable(os.Stdout, data)
+		return WriteTable(os.Stdout, data, labels)
 	case FormatRaw:
 		return WriteRaw(os.Stdout, data)
 	default:
