@@ -53,9 +53,8 @@ func runUpgrade() error {
 	fmt.Println("正在下载...")
 
 	archiveName := fmt.Sprintf("xrxs_%s_%s-%s.tar.gz", latestVersion, runtime.GOOS, runtime.GOARCH)
-	gitlabHost := getGitLabHost()
-	downloadURL := fmt.Sprintf("https://%s/liuxin/xrxs-cli/-/releases/%s/downloads/%s",
-		gitlabHost, latest.TagName, archiveName)
+	downloadURL := fmt.Sprintf("https://github.com/LucyHeres/xrxs-cli/releases/download/%s/%s",
+		latest.TagName, archiveName)
 
 	tmpDir, err := os.MkdirTemp("", "xrxs-upgrade")
 	if err != nil {
@@ -78,12 +77,10 @@ func runUpgrade() error {
 		return fmt.Errorf("找不到当前程序路径: %w", err)
 	}
 
-	// On macOS, the binary might be a symlink; resolve it
 	if resolved, err := filepath.EvalSymlinks(targetPath); err == nil {
 		targetPath = resolved
 	}
 
-	// Atomic replace: write to temp file, then rename
 	tmpTarget := targetPath + ".new"
 	if err := copyFile(binaryPath, tmpTarget); err != nil {
 		return fmt.Errorf("安装失败: %w", err)
@@ -91,7 +88,6 @@ func runUpgrade() error {
 	os.Chmod(tmpTarget, 0o755)
 
 	if err := os.Rename(tmpTarget, targetPath); err != nil {
-		// Fallback: copy+remove (cross-device on macOS)
 		if err := copyFile(tmpTarget, targetPath); err != nil {
 			os.Remove(tmpTarget)
 			return fmt.Errorf("替换二进制失败: %w", err)
@@ -108,25 +104,16 @@ type githubRelease struct {
 	TagName string `json:"tag_name"`
 }
 
-func getGitLabHost() string {
-	if h := os.Getenv("XRXS_GITLAB_HOST"); h != "" {
-		return h
-	}
-	return "code.qijiayoudao.net"
-}
-
 func fetchLatestRelease() (*githubRelease, error) {
 	apiURL := os.Getenv("XRXS_UPGRADE_API")
 	if apiURL == "" {
-		apiURL = fmt.Sprintf("https://%s/api/v4/projects/liuxin%%2Fxrxs-cli/releases?per_page=1", getGitLabHost())
+		apiURL = "https://api.github.com/repos/LucyHeres/xrxs-cli/releases/latest"
 	}
 
 	client := &http.Client{Timeout: upgradeTimeout}
 	req, _ := http.NewRequest("GET", apiURL, nil)
 	req.Header.Set("User-Agent", "xrxs-cli-upgrade")
-	if token := os.Getenv("GITLAB_TOKEN"); token != "" {
-		req.Header.Set("PRIVATE-TOKEN", token)
-	}
+	req.Header.Set("Accept", "application/vnd.github+json")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -135,28 +122,21 @@ func fetchLatestRelease() (*githubRelease, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 403 || resp.StatusCode == 429 {
-		return nil, fmt.Errorf("GitLab API 频率限制，请稍后重试")
+		return nil, fmt.Errorf("GitHub API 频率限制，请稍后重试")
 	}
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("GitLab API 返回 HTTP %d", resp.StatusCode)
+		return nil, fmt.Errorf("GitHub API 返回 HTTP %d", resp.StatusCode)
 	}
 
-	var releases []githubRelease
-	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
+	var release githubRelease
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
 		return nil, fmt.Errorf("解析版本信息失败: %w", err)
 	}
-	if len(releases) == 0 {
-		return nil, fmt.Errorf("未找到任何发布版本")
-	}
-	return &releases[0], nil
+	return &release, nil
 }
 
 func downloadFile(url, dest string) error {
-	req, _ := http.NewRequest("GET", url, nil)
-	if token := os.Getenv("GITLAB_TOKEN"); token != "" {
-		req.Header.Set("PRIVATE-TOKEN", token)
-	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}

@@ -3,30 +3,25 @@
 # 适用于 macOS / Linux
 #
 # 用法:
-#   curl -fsSL https://code.qijiayoudao.net/liuxin/xrxs-cli/-/releases/latest/downloads/install.sh | sh
+#   curl -fsSL https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh | sh
 #
 # 环境变量:
 #   XRXS_VERSION     — 指定版本 (默认 latest)
 #   XRXS_INSTALL_DIR — 安装目录 (默认 /usr/local/bin, 不可写时回退到 ~/.local/bin)
 #   XRXS_NO_SKILLS   — 设为 1 跳过 Skill 安装
-#   GITLAB_TOKEN     — GitLab 访问令牌 (访问私有仓库时需要)
 
 set -eu
 
-GITLAB_HOST="code.qijiayoudao.net"
-REPO="liuxin/xrxs-cli"
-REPO_ENCODED="liuxin%2Fxrxs-cli"
+REPO="LucyHeres/xrxs-cli"
 BIN_NAME="xrxs"
 VERSION="${XRXS_VERSION:-latest}"
-GITLAB_API="https://${GITLAB_HOST}/api/v4"
-BASE_URL="https://${GITLAB_HOST}/${REPO}"
+BASE_URL="${XRXS_BASE_URL:-https://github.com/${REPO}/releases}"
 NO_SKILLS="${XRXS_NO_SKILLS:-0}"
 
 say()  { printf '  %s\n' "$@"; }
 err()  { printf '  \033[31m%s\033[0m\n' "$@" >&2; exit 1; }
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
 
-# 选择安装目录：优先 /usr/local/bin (macOS/Linux 默认 PATH 内)
 pick_install_dir() {
   if [ -n "${XRXS_INSTALL_DIR:-}" ]; then
     mkdir -p "$XRXS_INSTALL_DIR" 2>/dev/null || true
@@ -36,7 +31,6 @@ pick_install_dir() {
     fi
   fi
 
-  # 尝试 /usr/local/bin
   if [ ! -d /usr/local/bin ]; then
     mkdir -p /usr/local/bin 2>/dev/null || true
   fi
@@ -45,27 +39,18 @@ pick_install_dir() {
     return
   fi
 
-  # 回退到 ~/.local/bin
   mkdir -p "$HOME/.local/bin" 2>/dev/null || true
   echo "$HOME/.local/bin"
 }
 
 download() {
   url="$1"; dest="$2"
-  if [ -n "${GITLAB_TOKEN:-}" ]; then
-    if need_cmd curl; then
-      curl -fsSL ${XRXS_INSECURE:+-k} -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" "$url" -o "$dest"
-    elif need_cmd wget; then
-      wget -qO "$dest" --header="PRIVATE-TOKEN: ${GITLAB_TOKEN}" "$url"
-    fi
+  if need_cmd curl; then
+    curl -fsSL ${XRXS_INSECURE:+-k} "$url" -o "$dest"
+  elif need_cmd wget; then
+    wget -qO "$dest" "$url"
   else
-    if need_cmd curl; then
-      curl -fsSL ${XRXS_INSECURE:+-k} "$url" -o "$dest"
-    elif need_cmd wget; then
-      wget -qO "$dest" "$url"
-    else
-      err "安装失败: 系统缺少 curl 或 wget"
-    fi
+    err "安装失败: 系统缺少 curl 或 wget"
   fi
 }
 
@@ -84,19 +69,15 @@ detect_platform() {
   echo "${os}-${arch}"
 }
 
-# 确保 INSTALL_DIR 在 PATH 中（仅在回退到 ~/.local/bin 时需要）
 ensure_path() {
   dir="$1"
-  # /usr/local/bin 已在系统 PATH，无需处理
   case "$dir" in /usr/local/bin) return ;; esac
 
   case ":$PATH:" in
     *:"$dir":*) return ;;
   esac
 
-  # 写入 shell 配置文件，新终端自动生效
   for rc in "$HOME/.zshenv" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
-    # 跳过不可写的文件
     [ -w "$rc" ] || [ ! -f "$rc" ] || continue
     if ! grep -q "$dir" "$rc" 2>/dev/null; then
       echo "export PATH=\"\$PATH:$dir\"" >> "$rc" 2>/dev/null || true
@@ -115,23 +96,16 @@ say "系统: $PLATFORM"
 
 if [ "$VERSION" = "latest" ]; then
   if need_cmd curl; then
-    AUTH_HEADER=""
-    if [ -n "${GITLAB_TOKEN:-}" ]; then
-      AUTH_HEADER="--header PRIVATE-TOKEN: ${GITLAB_TOKEN}"
-    fi
-    VERSION=$(curl -fsSL ${XRXS_INSECURE:+-k} ${AUTH_HEADER:+-H "PRIVATE-TOKEN: ${GITLAB_TOKEN}"} "${GITLAB_API}/projects/${REPO_ENCODED}/releases?per_page=1" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')
+    VERSION=$(curl -fsSL ${XRXS_INSECURE:+-k} "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)".*/\1/')
   fi
   if [ -z "$VERSION" ]; then
-    err "获取版本信息失败，请检查网络连接或设置 GITLAB_TOKEN"
+    err "获取版本信息失败，请检查网络连接"
   fi
 fi
 
-# GitLab release download URL
-DOWNLOAD_PATH="/${REPO}/-/releases/${VERSION}/downloads"
-# 去掉 VERSION 开头的 v (API 返回 v0.3.0, 文件名是 0.3.0)
 VER="${VERSION#v}"
 ARCHIVE="xrxs_${VER}_${PLATFORM}.tar.gz"
-DOWNLOAD_URL="https://${GITLAB_HOST}${DOWNLOAD_PATH}/${ARCHIVE}"
+DOWNLOAD_URL="${BASE_URL}/download/${VERSION}/${ARCHIVE}"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
@@ -148,7 +122,6 @@ ensure_path "$INSTALL_DIR"
 
 say "已安装: $INSTALL_DIR/$BIN_NAME"
 
-# 安装 AI Agent Skills
 if [ "$NO_SKILLS" != "1" ] && [ -f "$TMP_DIR/skills/xrxs/SKILL.md" ]; then
   SKILL_SRC="$TMP_DIR/skills/xrxs/SKILL.md"
   INSTALLED=0

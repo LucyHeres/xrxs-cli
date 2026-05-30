@@ -12,10 +12,10 @@ cli_version: ">=0.1.0"
 
 ```bash
 # macOS / Linux
-curl -fsSL https://code.qijiayoudao.net/liuxin/xrxs-cli/-/releases/latest/downloads/install.sh | sh
+curl -fsSL https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh | sh
 
 # Windows PowerShell
-irm https://code.qijiayoudao.net/liuxin/xrxs-cli/-/releases/latest/downloads/install.ps1 | iex
+irm https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.ps1 | iex
 ```
 
 ## 全局参数

@@ -50,8 +50,8 @@ changelog:
       - "^ci:"
 
 release:
-  gitlab:
-    owner: liuxin
+  github:
+    owner: LucyHeres
     name: xrxs-cli
   draft: false
   prerelease: auto
