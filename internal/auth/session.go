@@ -12,10 +12,12 @@ import (
 
 // Session holds the authentication state for API calls.
 type Session struct {
-	Cookies   []*http.Cookie `json:"cookies"`
-	CSRFToken string         `json:"csrf_token"`
-	BaseURL   string         `json:"base_url"`
-	CreatedAt time.Time      `json:"created_at"`
+	Cookies     []*http.Cookie `json:"cookies"`
+	CSRFToken   string         `json:"csrf_token"`
+	BaseURL     string         `json:"base_url"`
+	CompanyID   string         `json:"company_id"`
+	CompanyName string         `json:"company_name"`
+	CreatedAt   time.Time      `json:"created_at"`
 }
 
 // Save serializes and encrypts the session to a file.
