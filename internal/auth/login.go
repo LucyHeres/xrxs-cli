@@ -187,22 +187,37 @@ type switchCompanyResponse struct {
 	Status  bool   `json:"status"`
 }
 
-// FetchCompanyList gets the list of switchable companies for the current session.
-func FetchCompanyList(baseURL string, cookies []*http.Cookie, csrfToken string) ([]Company, error) {
-	baseURL = strings.TrimRight(baseURL, "/")
+// CompanySelector fetches the company list and handles the switch flow with a shared cookie jar.
+type CompanySelector struct {
+	baseURL   string
+	csrfToken string
+	jar       *cookiejar.Jar
+	client    *http.Client
+}
 
+// NewCompanySelector creates a selector with the initial session cookies.
+func NewCompanySelector(baseURL string, cookies []*http.Cookie, csrfToken string) *CompanySelector {
+	baseURL = strings.TrimRight(baseURL, "/")
 	jar, _ := cookiejar.New(nil)
 	u, _ := url.Parse(baseURL)
 	jar.SetCookies(u, cookies)
-	client := &http.Client{Jar: jar}
+	return &CompanySelector{
+		baseURL:   baseURL,
+		csrfToken: csrfToken,
+		jar:       jar,
+		client:    &http.Client{Jar: jar},
+	}
+}
 
-	req, _ := http.NewRequest("POST", baseURL+"/support/service/storm/ajax-get-switch-companyList", nil)
+// FetchCompanyList gets the list of switchable companies.
+func (s *CompanySelector) FetchCompanyList() ([]Company, error) {
+	req, _ := http.NewRequest("POST", s.baseURL+"/support/service/storm/ajax-get-switch-companyList", nil)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	if csrfToken != "" {
-		req.Header.Set("X-CSRF-TOKEN", csrfToken)
+	if s.csrfToken != "" {
+		req.Header.Set("X-CSRF-TOKEN", s.csrfToken)
 	}
 
-	resp, err := client.Do(req)
+	resp, err := s.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("获取公司列表失败: %w", err)
 	}
@@ -228,38 +243,37 @@ func FetchCompanyList(baseURL string, cookies []*http.Cookie, csrfToken string) 
 	return companies, nil
 }
 
-// SwitchCompany switches to the specified company and returns updated session cookies.
-func SwitchCompany(baseURL string, cookies []*http.Cookie, csrfToken string, targetID string) ([]*http.Cookie, error) {
-	baseURL = strings.TrimRight(baseURL, "/")
-
-	jar, _ := cookiejar.New(nil)
-	u, _ := url.Parse(baseURL)
-	jar.SetCookies(u, cookies)
-	client := &http.Client{Jar: jar}
-
+// SwitchCompany switches to the specified company.
+func (s *CompanySelector) SwitchCompany(targetID string) error {
 	body := url.Values{}
 	body.Set("targetId", targetID)
 
-	req, _ := http.NewRequest("POST", baseURL+"/account-center/service/sso/ajax-change-login", strings.NewReader(body.Encode()))
+	req, _ := http.NewRequest("POST", s.baseURL+"/account-center/service/sso/ajax-change-login", strings.NewReader(body.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	if csrfToken != "" {
-		req.Header.Set("X-CSRF-TOKEN", csrfToken)
+	if s.csrfToken != "" {
+		req.Header.Set("X-CSRF-TOKEN", s.csrfToken)
 	}
 
-	resp, err := client.Do(req)
+	resp, err := s.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("切换公司失败: %w", err)
+		return fmt.Errorf("切换公司失败: %w", err)
 	}
 	defer resp.Body.Close()
 
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	var scr switchCompanyResponse
 	if err := json.Unmarshal(bodyBytes, &scr); err != nil {
-		return nil, fmt.Errorf("解析切换公司响应: %w", err)
+		return fmt.Errorf("解析切换公司响应: %w", err)
 	}
 	if scr.Code != 0 {
-		return nil, fmt.Errorf("切换公司失败: %s (code=%d)", scr.Message, scr.Code)
+		return fmt.Errorf("切换公司失败: %s (code=%d)", scr.Message, scr.Code)
 	}
 
-	return jar.Cookies(u), nil
+	return nil
+}
+
+// Cookies returns the current cookies from the shared cookie jar.
+func (s *CompanySelector) Cookies() []*http.Cookie {
+	u, _ := url.Parse(s.baseURL)
+	return s.jar.Cookies(u)
 }

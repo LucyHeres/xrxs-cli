@@ -96,7 +96,8 @@ func authLoginRunE(cmd *cobra.Command, args []string) error {
 
 	// 获取可切换的公司列表
 	fmt.Println("正在获取公司列表...")
-	companies, err := auth.FetchCompanyList(baseURL, session.Cookies, session.CSRFToken)
+	selector := auth.NewCompanySelector(baseURL, session.Cookies, session.CSRFToken)
+	companies, err := selector.FetchCompanyList()
 	if err != nil {
 		return fmt.Errorf("获取公司列表失败: %w", err)
 	}
@@ -107,11 +108,10 @@ func authLoginRunE(cmd *cobra.Command, args []string) error {
 		// 只有一个公司，自动选择
 		fmt.Printf("唯一公司: %s\n", companies[0].Name)
 		fmt.Println("正在切换公司...")
-		updatedCookies, err := auth.SwitchCompany(baseURL, session.Cookies, session.CSRFToken, companies[0].ID)
-		if err != nil {
+		if err := selector.SwitchCompany(companies[0].ID); err != nil {
 			return fmt.Errorf("切换公司失败: %w", err)
 		}
-		session.Cookies = updatedCookies
+		session.Cookies = selector.Cookies()
 		session.CompanyID = companies[0].ID
 		session.CompanyName = companies[0].Name
 	} else {
@@ -135,11 +135,10 @@ func authLoginRunE(cmd *cobra.Command, args []string) error {
 
 		selected := companies[idx-1]
 		fmt.Printf("正在切换到 %s ...\n", selected.Name)
-		updatedCookies, err := auth.SwitchCompany(baseURL, session.Cookies, session.CSRFToken, selected.ID)
-		if err != nil {
+		if err := selector.SwitchCompany(selected.ID); err != nil {
 			return fmt.Errorf("切换公司失败: %w", err)
 		}
-		session.Cookies = updatedCookies
+		session.Cookies = selector.Cookies()
 		session.CompanyID = selected.ID
 		session.CompanyName = selected.Name
 	}
