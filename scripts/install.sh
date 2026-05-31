@@ -101,14 +101,7 @@ detect_platform() {
 }
 
 
-echo ""
-echo "  ╔══════════════════════════════════════╗"
-echo "  ║   欢迎使用薪人薪事 CLI                ║"
-echo "  ╚══════════════════════════════════════╝"
-echo ""
-
 PLATFORM="$(detect_platform)"
-say "系统: $PLATFORM"
 
 if [ "$VERSION" = "latest" ]; then
   if need_cmd curl; then
@@ -125,19 +118,12 @@ DOWNLOAD_URL="${BASE_URL}/download/${VERSION}/${ARCHIVE}"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-say "正在下载 xrxs ${VERSION} ..."
 download "$DOWNLOAD_URL" "$TMP_DIR/$ARCHIVE"
-
-say "正在安装..."
 tar -xzf "$TMP_DIR/$ARCHIVE" -C "$TMP_DIR"
 INSTALL_DIR="$(install_binary "$TMP_DIR/$BIN_NAME")"
 
-say "已安装: $INSTALL_DIR/$BIN_NAME"
-
 if [ "$NO_SKILLS" != "1" ] && [ -d "$TMP_DIR/skills/xrxs" ]; then
   SKILL_SRC_DIR="$TMP_DIR/skills/xrxs"
-  INSTALLED=0
-
   for agent_dir in \
     ".agents/skills" \
     ".claude/skills" \
@@ -160,17 +146,11 @@ if [ "$NO_SKILLS" != "1" ] && [ -d "$TMP_DIR/skills/xrxs" ]; then
     rm -rf "$dest_dir" 2>/dev/null || true
     mkdir -p "$(dirname "$dest_dir")" 2>/dev/null || continue
     cp -R "$SKILL_SRC_DIR" "$dest_dir" 2>/dev/null || continue
-    INSTALLED=$((INSTALLED + 1))
   done
-
-  say "已安装 Skill 到 $INSTALLED 个 AI Agent 目录"
 fi
 
 echo ""
-say "安装完成！"
+say "薪人薪事CLI 安装完成！安装位置：$INSTALL_DIR/$BIN_NAME"
 say ""
-say "  登录:"
-say "    xrxs auth login --base-url https://s122.devtest.vip"
-say ""
-say "  登录后在 Claude Code 中输入 /xrxs 即可通过对话操作审批。"
-say ""
+say "登录："
+say "  xrxs auth login --base-url https://s122.devtest.vip"
