@@ -452,6 +452,82 @@
               "path": "/approve/service/ajax-test-batch-urge"
             },
             {
+              "description": "安全催办：先检查是否可催办，可催办则自动执行催办",
+              "name": "safe-urge",
+              "pipeline": {
+                "steps": [
+                  {
+                    "id": "test",
+                    "path": "/approve/service/ajax-test-urge",
+                    "method": "POST",
+                    "encoding": "form",
+                    "params": [
+                      {
+                        "description": "审批记录 ID",
+                        "name": "sid",
+                        "required": true,
+                        "type": "string"
+                      }
+                    ],
+                    "outputKey": "testResult"
+                  },
+                  {
+                    "id": "urge",
+                    "path": "/approve/service/ajax-flow-urge",
+                    "method": "POST",
+                    "encoding": "form",
+                    "params": [
+                      {
+                        "description": "审批记录 ID",
+                        "name": "sid",
+                        "required": true,
+                        "type": "string"
+                      }
+                    ],
+                    "outputKey": "result"
+                  }
+                ]
+              }
+            },
+            {
+              "description": "安全批量催办：先检查是否可批量催办，可催办则自动执行批量催办",
+              "name": "safe-batch-urge",
+              "pipeline": {
+                "steps": [
+                  {
+                    "id": "test",
+                    "path": "/approve/service/ajax-test-batch-urge",
+                    "method": "POST",
+                    "encoding": "form",
+                    "params": [
+                      {
+                        "description": "批量审批 ID JSON",
+                        "name": "data",
+                        "required": true,
+                        "type": "string"
+                      }
+                    ],
+                    "outputKey": "testResult"
+                  },
+                  {
+                    "id": "urge",
+                    "path": "/approve/service/ajax-batch-flow-urge",
+                    "method": "POST",
+                    "encoding": "form",
+                    "params": [
+                      {
+                        "description": "批量审批 ID JSON",
+                        "name": "data",
+                        "required": true,
+                        "type": "string"
+                      }
+                    ],
+                    "outputKey": "result"
+                  }
+                ]
+              }
+            },
+            {
               "body": {
                 "length": 9999,
                 "monthFilter": 0,
@@ -948,6 +1024,53 @@
           "description": "审批类型管理",
           "name": "manage",
           "subtools": [
+            {
+              "description": "列出所有审批分组下的类型（自动获取分组并列出类型，并发拉取所有分组）",
+              "name": "list-all-types",
+              "pipeline": {
+                "steps": [
+                  {
+                    "id": "fetchGroups",
+                    "path": "/approve/service/ajax-get-flow-group",
+                    "method": "GET",
+                    "encoding": "form",
+                    "outputKey": "groups"
+                  },
+                  {
+                    "id": "fetchTypes",
+                    "path": "/approve/service/ajax-get-flow-setting",
+                    "method": "GET",
+                    "encoding": "form",
+                    "params": [
+                      {
+                        "name": "groupId",
+                        "type": "string",
+                        "description": "审批分组 ID（从分组列表逐项获取）",
+                        "default": "{{.item.groupId}}"
+                      }
+                    ],
+                    "outputKey": "groupedTypes",
+                    "fanOut": {
+                      "source": "groups",
+                      "concurrency": 4,
+                      "onError": "skip",
+                      "itemKey": "group",
+                      "resultKey": "types"
+                    }
+                  }
+                ]
+              },
+              "output": {
+                "labels": {
+                  "flowSettingId": "类型ID",
+                  "flowType": "流程类型",
+                  "name": "名称",
+                  "openStatus": "启用状态",
+                  "type": "自定义",
+                  "complete": "是否完整"
+                }
+              }
+            },
             {
               "description": "列出所有审批分组的元信息（分组ID、名称、排序等），无需参数。区别于 list（按分组列出审批类型明细，需传 groupId）",
               "encoding": "form",

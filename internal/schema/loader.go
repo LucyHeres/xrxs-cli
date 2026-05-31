@@ -31,15 +31,9 @@ func LoadAllManifests(dir string) (*Manifest, error) {
 	return loadManifestsFromDir(os.DirFS(dir), ".")
 }
 
-// LoadManifestsFromFS loads all .json manifest files from an embed.FS.
+// LoadManifestsFromFS loads all .json manifest files from an fs.FS.
 func LoadManifestsFromFS(fsys fs.FS) (*Manifest, error) {
 	return loadManifestsFromDir(fsys, ".")
-}
-
-// LoadFromEmbed loads manifests from the embedded FS (EmbeddedFS).
-func LoadFromEmbed() (*Manifest, error) {
-	// EmbeddedFS root is internal/schema/, files are in schemas/ subdir
-	return loadManifestsFromDir(EmbeddedFS, "schemas")
 }
 
 func loadManifestsFromDir(fsys fs.FS, dir string) (*Manifest, error) {

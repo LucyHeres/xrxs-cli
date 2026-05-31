@@ -35,7 +35,8 @@
 - 转交 → `forward --sid <sid> --approver-id <id> --remark "<转交说明>"`
 
 用户说"催一下/催办":
-- 催办 → `urge --sid <sid>`
+- 催办 → `urge --sid <sid>` 或 `safe-urge --sid <sid>`（推荐，先检查再催办）
+- 批量催办 → `batch-urge` 或 `safe-batch-urge`（推荐）
 
 用户说"导出审批/下载审批列表":
 - 导出 → `export`
@@ -144,6 +145,36 @@ Example:
 Flags:
       --sid string   审批记录 ID（必传）
 ```
+
+### 安全催办（推荐）
+
+> Pipeline 命令：先检查是否可催办，可催办则自动执行。避免盲目催办导致的 API 错误提示。
+
+```
+Usage:
+  xrxs approval list safe-urge [flags]
+Example:
+  xrxs approval list safe-urge --sid <sid>
+Flags:
+      --sid string   审批记录 ID（必传）
+```
+
+执行流程：`test-urge` →（可催办）→ `urge`；如不可催办，Pipeline 在第一步终止并返回原因。
+
+### 安全批量催办（推荐）
+
+> Pipeline 命令：先检查是否可批量催办，可催办则自动执行。
+
+```
+Usage:
+  xrxs approval list safe-batch-urge [flags]
+Example:
+  xrxs approval list safe-batch-urge --data '<JSON>'
+Flags:
+      --data string   批量审批 ID JSON（必传）
+```
+
+执行流程：`test-batch-urge` →（可催办）→ `batch-urge`。
 
 ### 导出审批列表
 

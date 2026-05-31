@@ -29,7 +29,8 @@
 - 预览 → `preview --setting-id <id>`
 
 **用户只说"列出审批类型/有哪些审批类型"（未提分组）**:
-- 先调 `list-groups` 拿所有分组 ID，再逐个 `list --group-id <id>`，最后汇总展示
+- 用 `list-all-types` 一键拉取所有分组及其类型（Pipeline 命令，自动并发）
+- 或手动：先调 `list-groups` 拿所有分组 ID，再逐个 `list --group-id <id>`，最后汇总展示
 
 关键区分: `manage list`(查分组下的审批类型，需 groupId) vs `manage list-groups`(查分组元信息，无参数)
 关键区分: `manage get`(查审批类型配置模板，参数 --setting-id) vs `detail get`(查审批记录实例，参数 --sid)
@@ -58,6 +59,24 @@ Flags:
 | `groupName` | 分组名称 JSON（含 showVal / defVal） |
 | `isFixed` | 是否固定分组（1=系统固定，0=可删除） |
 | `orderNum` | 排序号 |
+
+### 一键列出所有分组及其审批类型（推荐）
+
+> Pipeline 命令：自动获取所有分组，并发拉取每个分组下的审批类型，合并输出。一条命令替代 "list-groups + 逐个 list"。
+
+```
+Usage:
+  xrxs approval manage list-all-types [flags]
+Example:
+  xrxs approval manage list-all-types -f table
+  xrxs approval manage list-all-types --format json
+Flags:
+      --group-id string   审批分组 ID（可选，不传则拉取所有分组）
+```
+
+返回格式：`[{group: {groupId, groupName, ...}, types: [{flowSettingId, name, ...}, ...]}, ...]`
+
+并发度默认为 4，某个分组拉取失败自动跳过（不影响其他分组结果）。
 
 ### 按分组列出审批类型
 
@@ -170,14 +189,15 @@ Flags:
 ### 工作流 1: 浏览全部分组和审批类型
 
 ```bash
-# 1. 列全部分组
-xrxs approval manage list-groups --format json
+# 推荐：一键拉取所有分组及其类型（Pipeline 命令，自动并发）
+xrxs approval manage list-all-types -f table
+xrxs approval manage list-all-types --format json
 
-# 2. 从返回中提取所有 groupId，逐个查类型
-xrxs approval manage list --group-id 0 --format json   # 员工审批
-xrxs approval manage list --group-id 1 --format json   # 工资社保审批
-xrxs approval manage list --group-id 2 --format json   # 考勤审批
-# ... 依此类推，按 list-groups 返回的 groupId 遍历
+# 或手动遍历（仅当需要自定义筛选时使用）
+xrxs approval manage list-groups --format json         # 1. 列全部分组
+xrxs approval manage list --group-id 0 --format json   # 2. 逐个查类型
+xrxs approval manage list --group-id 1 --format json
+# ...
 ```
 
 ### 工作流 2: 查看审批类型配置

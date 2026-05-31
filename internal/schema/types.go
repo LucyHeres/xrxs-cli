@@ -27,6 +27,9 @@ type Tool struct {
 	Output   OutputSpec  `json:"output,omitempty"`
 	Params   []Param     `json:"params,omitempty"`
 	Body     interface{} `json:"body,omitempty"` // Static body template (map[string]any or nil)
+
+	// Pipeline defines a multi-step API call sequence (alternative to single Path/Method).
+	Pipeline *PipelineSpec `json:"pipeline,omitempty"`
 }
 
 // OutputSpec describes how to process the API response.
@@ -58,7 +61,39 @@ func (p Param) APIName() string {
 	return p.Name
 }
 
-// IsLeaf returns true if this tool is a leaf command (executes an API call).
+// PipelineSpec defines a multi-step API call sequence.
+type PipelineSpec struct {
+	Steps []PipelineStep `json:"steps"`
+}
+
+// FanOutSpec defines a fan-out (map) over an array from a previous step.
+type FanOutSpec struct {
+	Source      string `json:"source"`                // Step ID whose output array to iterate over
+	Concurrency int    `json:"concurrency,omitempty"` // Max concurrent requests (0=sequential, default 4)
+	OnError     string `json:"onError,omitempty"`     // "fail" (default) or "skip": skip failed items
+	ItemKey     string `json:"itemKey,omitempty"`     // Key for source item in result (default: "item")
+	ResultKey   string `json:"resultKey,omitempty"`   // Key for API result in result (default: "result")
+}
+
+// PipelineStep is a single API call within a pipeline.
+// When FanOut is set, this step iterates over an array from a previous step.
+type PipelineStep struct {
+	ID        string      `json:"id"`                  // Unique within pipeline, for cross-step refs
+	Path      string      `json:"path"`                // API endpoint
+	Method    string      `json:"method"`              // GET/POST
+	Encoding  string      `json:"encoding"`            // "form", "json", "form-nested"
+	Params    []Param     `json:"params,omitempty"`    // CLI flags for this step
+	Body      interface{} `json:"body,omitempty"`      // Body template map
+	OutputKey string      `json:"outputKey,omitempty"` // Key to store result under in pipeline context
+	Condition string      `json:"condition,omitempty"` // Optional Go template condition
+	Unwrap    string      `json:"unwrap,omitempty"`    // Per-step unwrap path
+	FanOut    *FanOutSpec `json:"fanOut,omitempty"`    // Fan-out configuration (map over an array)
+}
+
+// IsLeaf returns true if this tool is a leaf command (executes an API call or pipeline).
 func (t Tool) IsLeaf() bool {
+	if t.Pipeline != nil {
+		return true
+	}
 	return len(t.Subtools) == 0 && t.Path != ""
 }

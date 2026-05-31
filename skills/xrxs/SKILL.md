@@ -130,18 +130,31 @@ xrxs approval list search --status 0 --fields employeeName,title,addDate -f tabl
 # 批量查看所有待审批
 xrxs approval list search --status 0 --page-size 100 -f table
 
-# 查看审批分组
-xrxs approval manage list-groups -f table
+# 一键查看所有分组及其审批类型（Pipeline 命令，推荐）
+xrxs approval manage list-all-types -f table
 
-# 查看某分组下的审批类型
+# 查看具体某个分组下的审批类型
 xrxs approval manage list --group-id 2 -f table
 
 # 查看审批详情
 xrxs approval detail get --sid <sid>
 
+# 催办(先检查再执行，推荐)
+xrxs approval list safe-urge --sid <sid>
+
 # 通过审批
 xrxs approval list approve --sid <sid> --comment "同意"
 ```
+
+### Pipeline 命令
+
+部分命令通过 Pipeline 机制将多个 API 调用串联为一条命令：
+
+| 命令 | 步骤 | 说明 |
+|------|------|------|
+| `manage list-all-types` | `fetchGroups` → fan-out `fetchTypes` | 一键拉取所有分组+类型，并发度 4，单分组失败自动跳过 |
+| `list safe-urge` | `test-urge` → `urge` | 先检查是否可催办，可则自动执行；不可则终止并返回原因 |
+| `list safe-batch-urge` | `test-batch-urge` → `batch-urge` | 同上，批量场景 |
 
 ## 详细参考（按需读取）
 

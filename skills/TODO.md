@@ -53,3 +53,63 @@
 **原因**: DWS 支持单 skill（mono）和多 skill（multi）两种部署模式。XRXS 只有一个产品，不需要 multi 模式。
 
 **触发条件**: 当产品模块达到 5 个以上且用户希望按需安装部分模块时，实现 multi 模式。
+
+---
+
+## 7. 结构化错误体系 + 退出码
+
+**原因**: 当前所有错误统一 `exit code 1`，无法区分是登录过期、参数错误还是网络超时。DWS 有 5 种错误类别（API/Auth/Validation/Discovery/Internal），每种固定退出码，支持机器可读 JSON + 人类可读两种输出格式，附带 Hint/Actions 等恢复建议。
+
+**触发条件**: 当 CLI 被脚本/CI/Agent 自动化调用，需要根据失败原因走不同处理分支（重试/重新登录/报错）时实施。
+
+**参考**: `/Users/liuxin/code/dingtalk-workspace-cli/internal/errors/errors.go`
+
+---
+
+## 8. Schema 远程发现 + 本地缓存
+
+**原因**: 当前 Schema 通过本地 JSON 文件加载（开发）或嵌入二进制（生产），需要手动维护两份副本。DWS 通过 Market API 远程拉取 Schema，本地缓存到 `~/.dws/cache/`，支持 TTL 过期、原子写入、离线降级兜底。
+
+**触发条件**: Schema 迁移到服务端、支持多个产品模块后实施。届时删掉 `internal/schema/embed.go` 和 symlink，替换为 HTTP loader。
+
+**参考**: `/Users/liuxin/code/dingtalk-workspace-cli/internal/discovery/service.go`, `internal/cache/store.go`
+
+---
+
+## 9. Flag → 参数 Normalizer 闭包管线
+
+**原因**: 当前 `buildFormParams` 只做简单的 flag → URL value 映射。DWS 的 `buildOverrideBindings` 返回一个 8 步 Normalizer 管线：默认值注入（按类型强制）→ 环境变量回退 → Runtime Defaults → 转换函数 → MapsTo 路由 → OmitWhen → 嵌套结构 → Body 包装。可以替代很多 body template 中的重复逻辑。
+
+**触发条件**: 当 body template 越来越复杂、出现大量重复的 `{{if .xxx}}...{{end}}` 条件判断时实施。
+
+**参考**: `/Users/liuxin/code/dingtalk-workspace-cli/internal/compat/dynamic_commands.go:564-890`
+
+---
+
+## 10. 输出自动检测（findDataList）
+
+**原因**: 当前需要手动在 Schema 中配置 `"unwrap": "data.result.data"` 来定位响应中的数组。DWS 的 `findDataList` 自动按优先级搜索常见 key（value/items/results/data/list/records 等），table/csv 格式化器共享同一检测逻辑。
+
+**触发条件**: 当 API 响应格式不统一、unwrap 配置过多且易出错时实施。
+
+**参考**: `/Users/liuxin/code/dingtalk-workspace-cli/internal/output/filter.go:89-121`
+
+---
+
+## 11. 测试 Fixture 模式
+
+**原因**: 当前 `builder_test.go` 是手动 `httptest.NewServer` + 硬编码 handler，每个测试都要重写完整的 mock 逻辑。DWS 的 `mock_mcp.Server` + `Fixture` 结构体支持声明式定义 mock 行为（Registry/CLI/Detail/MCP 四层 mock），测试代码更简洁。
+
+**触发条件**: 当测试文件超过 500 行、新增测试越来越繁琐时实施。
+
+**参考**: `/Users/liuxin/code/dingtalk-workspace-cli/test/mock_mcp/server.go`, `fixture.go`
+
+---
+
+## 12. Edition 扩展点系统
+
+**原因**: 当前所有行为硬编码在 `root.go` 中。DWS 的 `edition.Hooks` 提供覆盖点：自定义配置目录、自定义 Token 持久化、静态服务器列表、自定义 HTTP Header、注册额外命令等。企业私有化部署通过外部注入，不修改核心代码。
+
+**触发条件**: 出现私有化部署需求、需要支持不同客户的定制行为时实施。
+
+**参考**: `/Users/liuxin/code/dingtalk-workspace-cli/pkg/edition/edition.go`

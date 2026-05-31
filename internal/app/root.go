@@ -23,12 +23,7 @@ func loadManifest() (*schema.Manifest, error) {
 		return schema.LoadAllManifests(d)
 	}
 
-	// 2. Try embedded schemas (production binary)
-	if m, err := schema.LoadFromEmbed(); err == nil && len(m.Products) > 0 {
-		return m, nil
-	}
-
-	// 3. Development fallback: look relative to cwd
+	// 2. Look for config/schemas relative to cwd
 	dir, _ := os.Getwd()
 	for {
 		schemaDir := filepath.Join(dir, "config", "schemas")
@@ -42,7 +37,7 @@ func loadManifest() (*schema.Manifest, error) {
 		dir = parent
 	}
 
-	return nil, fmt.Errorf("未找到 Schema 文件")
+	return nil, fmt.Errorf("未找到 Schema 文件，请设置 XRXS_SCHEMA_DIR 环境变量或在项目根目录运行")
 }
 
 // Execute is the main entry point, called from cmd/main.go.

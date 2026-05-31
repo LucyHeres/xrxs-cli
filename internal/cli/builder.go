@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"text/template"
 	"unicode"
 
@@ -59,20 +61,34 @@ func (b *Builder) buildTool(t *schema.Tool) *cobra.Command {
 }
 
 func (b *Builder) buildLeaf(t *schema.Tool) *cobra.Command {
+	var runE func(*cobra.Command, []string) error
+	var params []schema.Param
+
+	if t.Pipeline != nil {
+		runE = b.createPipelineRunE(t)
+		params = collectPipelineParams(t.Pipeline)
+	} else {
+		runE = b.createRunE(t)
+		params = t.Params
+	}
+
 	cmd := &cobra.Command{
 		Use:   t.Name,
 		Short: t.Description,
-		RunE:  b.createRunE(t),
+		RunE:  runE,
 	}
 
-	for i := range t.Params {
-		p := &t.Params[i]
+	for i := range params {
+		p := &params[i]
 		flagName := toKebabCase(p.Name) // CLI flag: kebab-case; API name: camelCase
 		switch p.Type {
 		case "string":
 			def := ""
 			if p.Default != nil {
-				def = fmt.Sprintf("%v", p.Default)
+				ds := fmt.Sprintf("%v", p.Default)
+				if !strings.Contains(ds, "{{") {
+					def = ds
+				}
 			}
 			if p.Short != "" {
 				cmd.Flags().StringP(flagName, p.Short, def, p.Description)
@@ -150,6 +166,482 @@ func (b *Builder) createRunE(t *schema.Tool) func(*cobra.Command, []string) erro
 
 		return output.WriteCommandPayload(format, parsed, fields, jqExpr, t.Output.Labels)
 	}
+}
+
+// --- pipeline execution ---
+
+// createPipelineRunE returns a RunE function that executes a multi-step API pipeline.
+// Steps with FanOut configured iterate over an array from a previous step.
+func (b *Builder) createPipelineRunE(t *schema.Tool) func(*cobra.Command, []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		cl, err := b.ClientFactory(cmd)
+		if err != nil {
+			return err
+		}
+
+		format, fields, jqExpr := b.FormatFunc(cmd)
+		pipelineCtx := make(map[string]any)
+
+		for _, step := range t.Pipeline.Steps {
+			if step.Condition != "" {
+				ok, err := evaluateCondition(step.Condition, pipelineCtx)
+				if err != nil {
+					return fmt.Errorf("步骤 %s 条件表达式错误: %w", step.ID, err)
+				}
+				if !ok {
+					continue
+				}
+			}
+
+			// Fan-out: iterate over an array from a previous step
+			if step.FanOut != nil {
+				results, err := b.executeFanOutStep(cl, step, cmd, pipelineCtx)
+				if err != nil {
+					return fmt.Errorf("步骤 %s (fan-out %s) 执行失败: %w", step.ID, step.Path, err)
+				}
+				key := step.OutputKey
+				if key == "" {
+					key = step.ID
+				}
+				pipelineCtx[key] = results
+				continue
+			}
+
+			resolvedParams := b.resolveStepParams(step, cmd, pipelineCtx)
+			resolvedBody := b.resolveStepBody(step, cmd, pipelineCtx)
+
+			resp, err := b.executeStep(cl, step, resolvedParams, resolvedBody)
+			if err != nil {
+				return fmt.Errorf("步骤 %s (%s) 执行失败: %w", step.ID, step.Path, err)
+			}
+
+			var parsed any
+			if len(resp.Data) > 0 {
+				if err := json.Unmarshal(resp.Data, &parsed); err != nil {
+					return fmt.Errorf("步骤 %s 解析响应失败: %w", step.ID, err)
+				}
+			} else {
+				parsed = map[string]any{}
+			}
+
+			if step.Unwrap != "" {
+				parsed = unwrapByPath(parsed, step.Unwrap)
+			}
+
+			key := step.OutputKey
+			if key == "" {
+				key = step.ID
+			}
+			pipelineCtx[key] = parsed
+		}
+
+		lastStep := t.Pipeline.Steps[len(t.Pipeline.Steps)-1]
+		lastKey := lastStep.OutputKey
+		if lastKey == "" {
+			lastKey = lastStep.ID
+		}
+		finalResult := pipelineCtx[lastKey]
+
+		if t.Output.Unwrap != "" {
+			finalResult = unwrapByPath(finalResult, t.Output.Unwrap)
+		}
+
+		return output.WriteCommandPayload(format, finalResult, fields, jqExpr, t.Output.Labels)
+	}
+}
+
+// executeStep performs a single API call using the same dispatch logic as createRunE.
+func (b *Builder) executeStep(cl *client.Client, step schema.PipelineStep, resolvedParams map[string]any, bodyMap map[string]any) (*client.Response, error) {
+	switch step.Encoding {
+	case "form-nested":
+		return cl.PostFormJSON(context.Background(), step.Path, bodyMap)
+	case "json":
+		return cl.PostJSON(context.Background(), step.Path, bodyMap)
+	case "form":
+		params := buildFormParamsFromResolved(resolvedParams)
+		if step.Method == "GET" {
+			return cl.Get(context.Background(), step.Path, params)
+		}
+		return cl.Post(context.Background(), step.Path, params)
+	default:
+		params := buildFormParamsFromResolved(resolvedParams)
+		if step.Method == "GET" {
+			return cl.Get(context.Background(), step.Path, params)
+		}
+		return cl.Post(context.Background(), step.Path, params)
+	}
+}
+
+// --- fan-out execution ---
+
+// executeFanOutStep iterates over a source array from a previous step, calls the API for
+// each element, and collects results. Concurrency is limited to avoid overwhelming the backend.
+func (b *Builder) executeFanOutStep(cl *client.Client, step schema.PipelineStep, cmd *cobra.Command, pipelineCtx map[string]any) ([]any, error) {
+	fo := step.FanOut
+
+	// Get the source array
+	sourceVal, ok := pipelineCtx[fo.Source]
+	if !ok {
+		return nil, fmt.Errorf("fan-out source %q not found in pipeline context", fo.Source)
+	}
+	sourceArr, ok := sourceVal.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("fan-out source %q is not an array (type %T)", fo.Source, sourceVal)
+	}
+	if len(sourceArr) == 0 {
+		return []any{}, nil
+	}
+
+	concurrency := fo.Concurrency
+	if concurrency <= 0 {
+		concurrency = 4 // default: max 4 concurrent requests
+	}
+
+	onError := fo.OnError
+	if onError == "" {
+		onError = "fail"
+	}
+
+	itemKey := fo.ItemKey
+	if itemKey == "" {
+		itemKey = "item"
+	}
+	resultKey := fo.ResultKey
+	if resultKey == "" {
+		resultKey = "result"
+	}
+
+	// Pre-resolve params/body that don't depend on .item (flag values from CLI)
+	// We'll do per-item template resolution for template defaults that reference .item.
+	hasItemTemplates := b.stepHasItemTemplates(step)
+
+	type fanOutResult struct {
+		index  int
+		output map[string]any
+		err    error
+	}
+
+	sem := make(chan struct{}, concurrency)
+	results := make([]fanOutResult, len(sourceArr))
+	var wg sync.WaitGroup
+	var firstErr atomic.Value
+
+	for i, item := range sourceArr {
+		if onError == "fail" && firstErr.Load() != nil {
+			break
+		}
+
+		wg.Add(1)
+		go func(idx int, item any) {
+			defer wg.Done()
+
+			// Skip if we already have a fatal error
+			if onError == "fail" && firstErr.Load() != nil {
+				return
+			}
+
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			var resolvedParams map[string]any
+			var resolvedBody map[string]any
+
+			if hasItemTemplates {
+				resolvedParams = b.resolveStepParamsForItem(step, cmd, pipelineCtx, item)
+				resolvedBody = b.resolveStepBodyForItem(step, cmd, pipelineCtx, item)
+			} else {
+				resolvedParams = b.resolveStepParams(step, cmd, pipelineCtx)
+				resolvedBody = b.resolveStepBody(step, cmd, pipelineCtx)
+			}
+
+			resp, err := b.executeStep(cl, step, resolvedParams, resolvedBody)
+			if err != nil {
+				if onError == "skip" {
+					results[idx] = fanOutResult{index: idx, err: err}
+					return
+				}
+				firstErr.Store(err)
+				return
+			}
+
+			var parsed any
+			if len(resp.Data) > 0 {
+				if err := json.Unmarshal(resp.Data, &parsed); err != nil {
+					if onError == "skip" {
+						results[idx] = fanOutResult{index: idx, err: fmt.Errorf("解析响应失败: %w", err)}
+						return
+					}
+					firstErr.Store(fmt.Errorf("解析响应失败: %w", err))
+					return
+				}
+			} else {
+				parsed = map[string]any{}
+			}
+
+			if step.Unwrap != "" {
+				parsed = unwrapByPath(parsed, step.Unwrap)
+			}
+
+			results[idx] = fanOutResult{
+				index: idx,
+				output: map[string]any{
+					itemKey:   item,
+					resultKey: parsed,
+				},
+			}
+		}(i, item)
+	}
+
+	wg.Wait()
+
+	if err, _ := firstErr.Load().(error); err != nil {
+		return nil, err
+	}
+
+	// Collect non-error results in order
+	var out []any
+	for i := range sourceArr {
+		r := results[i]
+		if r.err != nil {
+			continue // skipped
+		}
+		if r.output != nil {
+			out = append(out, r.output)
+		}
+	}
+
+	return out, nil
+}
+
+// stepHasItemTemplates checks whether any param default or body field references .item.
+func (b *Builder) stepHasItemTemplates(step schema.PipelineStep) bool {
+	for _, p := range step.Params {
+		if p.Default != nil {
+			if strings.Contains(fmt.Sprintf("%v", p.Default), ".item") {
+				return true
+			}
+		}
+	}
+	if step.Body != nil {
+		data, _ := json.Marshal(step.Body)
+		if strings.Contains(string(data), ".item") {
+			return true
+		}
+	}
+	return false
+}
+
+// resolveStepParamsForItem is like resolveStepParams but provides .item in template context.
+func (b *Builder) resolveStepParamsForItem(step schema.PipelineStep, cmd *cobra.Command, pipelineCtx map[string]any, item any) map[string]any {
+	resolved := make(map[string]any)
+	for _, p := range step.Params {
+		flagName := toKebabCase(p.Name)
+		userChanged := cmd.Flags().Changed(flagName)
+
+		switch p.Type {
+		case "string":
+			v, _ := cmd.Flags().GetString(flagName)
+			if !userChanged && p.Default != nil {
+				ds := fmt.Sprintf("%v", p.Default)
+				if strings.Contains(ds, "{{") {
+					v = resolveTemplatesWithItem(ds, pipelineCtx, item)
+				}
+			}
+			resolved[p.APIName()] = v
+		case "int":
+			v, _ := cmd.Flags().GetInt(flagName)
+			resolved[p.APIName()] = v
+		case "bool":
+			v, _ := cmd.Flags().GetBool(flagName)
+			resolved[p.APIName()] = v
+		}
+	}
+	return resolved
+}
+
+// resolveStepBodyForItem is like resolveStepBody but provides .item in template context.
+func (b *Builder) resolveStepBodyForItem(step schema.PipelineStep, cmd *cobra.Command, pipelineCtx map[string]any, item any) map[string]any {
+	var templateMap map[string]any
+	if step.Body != nil {
+		data, _ := json.Marshal(step.Body)
+		json.Unmarshal(data, &templateMap)
+	}
+	if templateMap == nil {
+		templateMap = make(map[string]any)
+	}
+
+	values := b.buildPipelineTemplateValues(step, cmd, pipelineCtx)
+	values["item"] = item
+	return resolveTemplatesMap(templateMap, values)
+}
+
+// resolveTemplatesWithItem resolves Go templates with .steps and .item available.
+func resolveTemplatesWithItem(raw string, pipelineCtx map[string]any, item any) string {
+	if !strings.Contains(raw, "{{") {
+		return raw
+	}
+	normalized := normalizePipelineContext(pipelineCtx)
+	tmpl, err := template.New("x").Parse(raw)
+	if err != nil {
+		return raw
+	}
+	var buf bytes.Buffer
+	data := map[string]any{"steps": normalized, "item": item}
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return raw
+	}
+	return buf.String()
+}
+
+// resolveStepParams reads flag values and resolves template defaults.
+func (b *Builder) resolveStepParams(step schema.PipelineStep, cmd *cobra.Command, pipelineCtx map[string]any) map[string]any {
+	resolved := make(map[string]any)
+	for _, p := range step.Params {
+		flagName := toKebabCase(p.Name)
+		userChanged := cmd.Flags().Changed(flagName)
+
+		switch p.Type {
+		case "string":
+			v, _ := cmd.Flags().GetString(flagName)
+			if !userChanged && p.Default != nil {
+				ds := fmt.Sprintf("%v", p.Default)
+				if strings.Contains(ds, "{{") {
+					v = resolvePipelineTemplates(ds, pipelineCtx)
+				}
+			}
+			resolved[p.APIName()] = v
+		case "int":
+			v, _ := cmd.Flags().GetInt(flagName)
+			resolved[p.APIName()] = v
+		case "bool":
+			v, _ := cmd.Flags().GetBool(flagName)
+			resolved[p.APIName()] = v
+		}
+	}
+	return resolved
+}
+
+// resolveStepBody builds and resolves the body template for a pipeline step.
+func (b *Builder) resolveStepBody(step schema.PipelineStep, cmd *cobra.Command, pipelineCtx map[string]any) map[string]any {
+	var templateMap map[string]any
+	if step.Body != nil {
+		data, _ := json.Marshal(step.Body)
+		json.Unmarshal(data, &templateMap)
+	}
+	if templateMap == nil {
+		templateMap = make(map[string]any)
+	}
+
+	values := b.buildPipelineTemplateValues(step, cmd, pipelineCtx)
+	return resolveTemplatesMap(templateMap, values)
+}
+
+// buildPipelineTemplateValues builds the template data context merging CLI flags and pipeline step results.
+func (b *Builder) buildPipelineTemplateValues(step schema.PipelineStep, cmd *cobra.Command, pipelineCtx map[string]any) map[string]any {
+	values := make(map[string]any)
+
+	normalized := normalizePipelineContext(pipelineCtx)
+	values["steps"] = normalized
+
+	for _, p := range step.Params {
+		flagName := toKebabCase(p.Name)
+		switch p.Type {
+		case "int":
+			v, _ := cmd.Flags().GetInt(flagName)
+			values[p.APIName()] = v
+		case "string":
+			v, _ := cmd.Flags().GetString(flagName)
+			values[p.APIName()] = v
+		case "bool":
+			v, _ := cmd.Flags().GetBool(flagName)
+			values[p.APIName()] = v
+		}
+	}
+
+	if _, hasPage := values["page"]; hasPage {
+		page := toInt(values["page"])
+		pageSize := toInt(values["pageSize"])
+		if pageSize < 1 {
+			pageSize = 20
+		}
+		if page < 1 {
+			page = 1
+		}
+		values["start"] = (page - 1) * pageSize
+		values["pageSize"] = pageSize
+	}
+
+	return values
+}
+
+// collectPipelineParams gathers all params from all pipeline steps, deduplicated by name.
+func collectPipelineParams(pipe *schema.PipelineSpec) []schema.Param {
+	seen := make(map[string]bool)
+	var result []schema.Param
+	for _, step := range pipe.Steps {
+		for _, p := range step.Params {
+			if !seen[p.Name] {
+				seen[p.Name] = true
+				result = append(result, p)
+			}
+		}
+	}
+	return result
+}
+
+// buildFormParamsFromResolved converts resolved param values to url.Values.
+func buildFormParamsFromResolved(params map[string]any) url.Values {
+	result := url.Values{}
+	for k, v := range params {
+		s := fmt.Sprintf("%v", v)
+		if s != "" {
+			result.Set(k, s)
+		}
+	}
+	return result
+}
+
+// normalizePipelineContext passes through pipeline step results for template access.
+// Array values remain as []interface{} — use {{index .steps.X 0}} to access items.
+func normalizePipelineContext(ctx map[string]any) map[string]any {
+	return ctx
+}
+
+// resolvePipelineTemplates resolves {{.steps.X.field}} and {{index .steps.X N}} templates.
+func resolvePipelineTemplates(raw string, pipelineCtx map[string]any) string {
+	if !strings.Contains(raw, "{{") {
+		return raw
+	}
+	normalized := normalizePipelineContext(pipelineCtx)
+	tmpl, err := template.New("x").Parse(raw)
+	if err != nil {
+		return raw
+	}
+	var buf bytes.Buffer
+	data := map[string]any{"steps": normalized}
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return raw
+	}
+	return buf.String()
+}
+
+// evaluateCondition evaluates a Go template condition string against the pipeline context.
+func evaluateCondition(cond string, pipelineCtx map[string]any) (bool, error) {
+	if strings.TrimSpace(cond) == "" {
+		return true, nil
+	}
+	normalized := normalizePipelineContext(pipelineCtx)
+	tmpl, err := template.New("cond").Parse(cond)
+	if err != nil {
+		return false, fmt.Errorf("parse condition: %w", err)
+	}
+	var buf bytes.Buffer
+	data := map[string]any{"steps": normalized}
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return false, fmt.Errorf("execute condition: %w", err)
+	}
+	result := strings.TrimSpace(buf.String())
+	return result != "" && result != "false" && result != "0", nil
 }
 
 // buildBodyMap constructs request body from template + computed values.
