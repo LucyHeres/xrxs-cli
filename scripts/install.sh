@@ -18,6 +18,8 @@ VERSION="${XRXS_VERSION:-latest}"
 BASE_URL="${XRXS_BASE_URL:-https://github.com/${REPO}/releases}"
 NO_SKILLS="${XRXS_NO_SKILLS:-0}"
 
+CURL="curl -fsSL --connect-timeout 10 --max-time 120"
+
 say()  { printf '  %s\n' "$@"; }
 err()  { printf '  \033[31m%s\033[0m\n' "$@" >&2; exit 1; }
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
@@ -77,9 +79,9 @@ install_binary() {
 download() {
   url="$1"; dest="$2"
   if need_cmd curl; then
-    curl -fsSL ${XRXS_INSECURE:+-k} "$url" -o "$dest"
+    $CURL ${XRXS_INSECURE:+-k} "$url" -o "$dest"
   elif need_cmd wget; then
-    wget -qO "$dest" "$url"
+    wget -q --timeout=120 "$url" -O "$dest"
   else
     err "安装失败: 系统缺少 curl 或 wget"
   fi
@@ -105,7 +107,7 @@ PLATFORM="$(detect_platform)"
 
 if [ "$VERSION" = "latest" ]; then
   if need_cmd curl; then
-    VERSION=$(curl -fsSL ${XRXS_INSECURE:+-k} "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)".*/\1/')
+    VERSION=$($CURL ${XRXS_INSECURE:+-k} "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)".*/\1/')
   fi
   if [ -z "$VERSION" ]; then
     err "获取版本信息失败，请检查网络连接"
