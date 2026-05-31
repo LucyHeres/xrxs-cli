@@ -12,7 +12,7 @@ cli_version: ">=0.1.0"
 
 ```bash
 # macOS / Linux
-curl -fsSL https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh | sh
+curl -fsSL https://gh-proxy.org/https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh | sh
 
 # Windows PowerShell
 irm https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.ps1 | iex
