@@ -949,7 +949,7 @@
           "name": "manage",
           "subtools": [
             {
-              "description": "列出所有审批分组",
+              "description": "列出所有审批分组的元信息（分组ID、名称、排序等），无需参数。区别于 list（按分组列出审批类型明细，需传 groupId）",
               "encoding": "form",
               "method": "GET",
               "name": "list-groups",
@@ -1012,7 +1012,7 @@
               "path": "/approve/service/ajax-remove-flow-group"
             },
             {
-              "description": "按分组列出审批类型",
+              "description": "按分组列出审批类型明细（需传入 groupId 参数），返回指定分组下的审批类型列表。区别于 list-groups（列出分组元信息，无需参数）",
               "encoding": "form",
               "method": "GET",
               "name": "list",

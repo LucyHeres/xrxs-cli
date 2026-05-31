@@ -134,8 +134,8 @@ INSTALL_DIR="$(install_binary "$TMP_DIR/$BIN_NAME")"
 
 say "已安装: $INSTALL_DIR/$BIN_NAME"
 
-if [ "$NO_SKILLS" != "1" ] && [ -f "$TMP_DIR/skills/xrxs/SKILL.md" ]; then
-  SKILL_SRC="$TMP_DIR/skills/xrxs/SKILL.md"
+if [ "$NO_SKILLS" != "1" ] && [ -d "$TMP_DIR/skills/xrxs" ]; then
+  SKILL_SRC_DIR="$TMP_DIR/skills/xrxs"
   INSTALLED=0
 
   for agent_dir in \
@@ -156,11 +156,14 @@ if [ "$NO_SKILLS" != "1" ] && [ -f "$TMP_DIR/skills/xrxs/SKILL.md" ]; then
     ".qoder/skills" \
     ".opencode/skills"
   do
-    dest="$HOME/$agent_dir/xrxs/SKILL.md"
-    mkdir -p "$(dirname "$dest")" 2>/dev/null || continue
-    cp "$SKILL_SRC" "$dest" 2>/dev/null || continue
+    dest_dir="$HOME/$agent_dir/xrxs"
+    rm -rf "$dest_dir" 2>/dev/null || true
+    mkdir -p "$(dirname "$dest_dir")" 2>/dev/null || continue
+    cp -R "$SKILL_SRC_DIR" "$dest_dir" 2>/dev/null || continue
     INSTALLED=$((INSTALLED + 1))
   done
+
+  say "已安装 Skill 到 $INSTALLED 个 AI Agent 目录"
 fi
 
 echo ""
