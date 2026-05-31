@@ -213,6 +213,7 @@ func NewCompanySelector(baseURL string, cookies []*http.Cookie, csrfToken string
 func (s *CompanySelector) FetchCompanyList() ([]Company, error) {
 	req, _ := http.NewRequest("POST", s.baseURL+"/support/service/storm/ajax-get-switch-companyList", nil)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+	req.Header.Set("XRXS-Language", "zh")
 	if s.csrfToken != "" {
 		req.Header.Set("X-CSRF-TOKEN", s.csrfToken)
 	}
@@ -250,6 +251,8 @@ func (s *CompanySelector) SwitchCompany(targetID string) error {
 
 	req, _ := http.NewRequest("POST", s.baseURL+"/account-center/service/sso/ajax-change-login", strings.NewReader(body.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+	req.Header.Set("XRXS-Language", "zh")
+	req.Header.Set("Referer", s.baseURL+"/home/index")
 	if s.csrfToken != "" {
 		req.Header.Set("X-CSRF-TOKEN", s.csrfToken)
 	}

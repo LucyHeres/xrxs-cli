@@ -110,6 +110,7 @@ func (c *Client) doRequest(ctx context.Context, method, path, contentType string
 	if c.Session.CSRFToken != "" {
 		req.Header.Set("X-CSRF-TOKEN", c.Session.CSRFToken)
 	}
+	req.Header.Set("XRXS-Language", "zh")
 
 	c.logf("=> %s %s", method, fullURL)
 
