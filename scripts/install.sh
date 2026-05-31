@@ -107,7 +107,7 @@ PLATFORM="$(detect_platform)"
 
 if [ "$VERSION" = "latest" ]; then
   if need_cmd curl; then
-    VERSION=$($CURL ${XRXS_INSECURE:+-k} "https://gh-proxy.org/https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)".*/\1/')
+    VERSION=$($CURL ${XRXS_INSECURE:+-k} "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)".*/\1/')
   fi
   if [ -z "$VERSION" ]; then
     err "获取版本信息失败，请检查网络连接"
