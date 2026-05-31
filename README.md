@@ -7,7 +7,7 @@
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://gh-proxy.org/https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh | sh
+curl -fsSL https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh | sh
 ```
 
 **Windows PowerShell**

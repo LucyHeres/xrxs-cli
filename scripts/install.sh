@@ -3,7 +3,7 @@
 # 适用于 macOS / Linux
 #
 # 用法:
-#   curl -fsSL https://gh-proxy.org/https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh | sh
+#   curl -fsSL https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh | sh
 #
 # 环境变量:
 #   XRXS_VERSION     — 指定版本 (默认 latest)
@@ -15,7 +15,7 @@ set -eu
 REPO="LucyHeres/xrxs-cli"
 BIN_NAME="xrxs"
 VERSION="${XRXS_VERSION:-latest}"
-BASE_URL="${XRXS_BASE_URL:-https://gh-proxy.org/https://github.com/${REPO}/releases}"
+BASE_URL="${XRXS_BASE_URL:-https://github.com/${REPO}/releases}"
 NO_SKILLS="${XRXS_NO_SKILLS:-0}"
 
 CURL="curl -fsSL --connect-timeout 10 --max-time 120"
