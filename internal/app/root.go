@@ -12,6 +12,7 @@ import (
 	"github.com/LucyHeres/xrxs-cli/internal/cli"
 	"github.com/LucyHeres/xrxs-cli/internal/client"
 	"github.com/LucyHeres/xrxs-cli/internal/output"
+	appconfig "github.com/LucyHeres/xrxs-cli/config"
 	"github.com/LucyHeres/xrxs-cli/internal/schema"
 	"github.com/LucyHeres/xrxs-cli/pkg/config"
 	"github.com/spf13/cobra"
@@ -37,7 +38,8 @@ func loadManifest() (*schema.Manifest, error) {
 		dir = parent
 	}
 
-	return nil, fmt.Errorf("未找到 Schema 文件，请设置 XRXS_SCHEMA_DIR 环境变量或在项目根目录运行")
+	// 3. Fall back to embedded schemas
+	return schema.LoadManifestsFromFS(appconfig.SchemaFS())
 }
 
 // Execute is the main entry point, called from cmd/main.go.

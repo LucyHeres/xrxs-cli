@@ -35,6 +35,8 @@ func runUpgrade() error {
 		currentVersion = "0.0.0"
 	}
 
+	fmt.Println("正在检查更新...")
+
 	latest, err := fetchLatestRelease()
 	if err != nil {
 		return fmt.Errorf("获取最新版本失败: %w", err)
@@ -47,7 +49,8 @@ func runUpgrade() error {
 		return nil
 	}
 
-	// 静默下载更新
+	fmt.Printf("发现新版本: v%s → v%s\n", currentVersion, latestVersion)
+	fmt.Println("正在下载...")
 
 	archiveName := fmt.Sprintf("xrxs_%s_%s-%s.tar.gz", latestVersion, runtime.GOOS, runtime.GOARCH)
 	downloadURL := fmt.Sprintf("https://github.com/LucyHeres/xrxs-cli/releases/download/%s/%s",
