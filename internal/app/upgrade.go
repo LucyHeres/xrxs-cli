@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -81,19 +82,8 @@ func runUpgrade() error {
 		targetPath = resolved
 	}
 
-	tmpTarget := targetPath + ".new"
-	if err := copyFile(binaryPath, tmpTarget); err != nil {
-		return fmt.Errorf("安装失败: %w", err)
-	}
-	os.Chmod(tmpTarget, 0o755)
-
-	if err := os.Rename(tmpTarget, targetPath); err != nil {
-		if err := copyFile(tmpTarget, targetPath); err != nil {
-			os.Remove(tmpTarget)
-			return fmt.Errorf("替换二进制失败: %w", err)
-		}
-		os.Remove(tmpTarget)
-		os.Chmod(targetPath, 0o755)
+	if err := replaceBinary(binaryPath, targetPath); err != nil {
+		return err
 	}
 
 	fmt.Printf("已更新到 v%s\n", latestVersion)
@@ -193,6 +183,51 @@ func extractBinary(archivePath, destDir string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("archive 中未找到 xrxs 二进制文件")
+}
+
+func replaceBinary(src, dst string) error {
+	tmpTarget := dst + ".new"
+	if err := copyFile(src, tmpTarget); err != nil {
+		if os.IsPermission(err) {
+			return sudoReplace(src, dst)
+		}
+		return fmt.Errorf("安装失败: %w", err)
+	}
+	os.Chmod(tmpTarget, 0o755)
+
+	if err := os.Rename(tmpTarget, dst); err != nil {
+		if os.IsPermission(err) || isCrossDevice(err) {
+			if err := copyFile(tmpTarget, dst); err != nil {
+				os.Remove(tmpTarget)
+				return fmt.Errorf("替换二进制失败: %w", err)
+			}
+			os.Remove(tmpTarget)
+			os.Chmod(dst, 0o755)
+			return nil
+		}
+		os.Remove(tmpTarget)
+		return fmt.Errorf("替换二进制失败: %w", err)
+	}
+	return nil
+}
+
+func sudoReplace(src, dst string) error {
+	cmd := exec.Command("sudo", "cp", src, dst)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("安装失败: %w", err)
+	}
+	exec.Command("sudo", "chmod", "755", dst).Run()
+	return nil
+}
+
+func isCrossDevice(err error) bool {
+	if le, ok := err.(*os.LinkError); ok {
+		return strings.Contains(le.Err.Error(), "cross-device")
+	}
+	return false
 }
 
 func copyFile(src, dst string) error {
