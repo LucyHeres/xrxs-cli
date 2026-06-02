@@ -1,0 +1,31 @@
+{
+  "version": "1",
+  "products": [
+    {
+      "name": "attendance",
+      "description": "考勤模块：打卡记录、假期、加班、班次管理",
+      "tools": [
+        {
+          "name": "record",
+          "description": "考勤打卡记录",
+          "subtools": []
+        },
+        {
+          "name": "leave",
+          "description": "假期管理",
+          "subtools": []
+        },
+        {
+          "name": "overtime",
+          "description": "加班管理",
+          "subtools": []
+        },
+        {
+          "name": "shift",
+          "description": "班次管理",
+          "subtools": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "version": "1",
+  "products": [
+    {
+      "name": "staff",
+      "description": "人事模块：员工信息、部门、岗位管理",
+      "tools": [
+        {
+          "name": "employee",
+          "description": "员工信息管理",
+          "subtools": []
+        },
+        {
+          "name": "department",
+          "description": "部门管理",
+          "subtools": []
+        },
+        {
+          "name": "job",
+          "description": "岗位管理",
+          "subtools": []
+        }
+      ]
+    }
+  ]
+}

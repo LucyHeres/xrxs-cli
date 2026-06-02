@@ -1,488 +1,281 @@
 {
   "products": [
     {
-      "description": "审批模块：列表查询、详情查看、审批操作、类型管理、角色和委托",
       "name": "approval",
-      "tools": [
+      "description": "审批管理",
+      "subtools": [
         {
-          "description": "审批列表查询与操作",
           "name": "list",
-          "subtools": [
+          "description": "审批列表查询与操作",
+          "tools": [
             {
-              "body": {
-                "length": "{{.pageSize}}",
-                "monthFilter": 4,
-                "order": {
-                  "0": {
-                    "dir": "",
-                    "field": ""
-                  }
-                },
-                "search": {
-                  "regex": false,
-                  "value": "filter:keyword={{.keyword}}\u0026flowType=\u0026status={{.status}}\u0026employeeId=\u0026departmentId=\u0026approveIds=\u0026addtime=\u0026modtime=\u0026formContent=\u0026flowGroupId={{.flowGroupId}}"
-                },
-                "speedy": {
-                  "value": "filter:searchType=\u0026flowType=\u0026employeeId="
-                },
-                "speedySearch": false,
-                "start": "{{.page}}"
-              },
-              "description": "搜索审批列表",
-              "encoding": "form-nested",
-              "method": "POST",
               "name": "search",
-              "output": {
-                "labels": {
-                  "addDate": "提交时间",
-                  "approveName": "当前审批人",
-                  "departmentName": "部门",
-                  "employeeName": "发起人",
-                  "flowName": "审批类型",
-                  "flowNumber": "审批编号",
-                  "sid": "审批ID",
-                  "statusName": "状态",
-                  "title": "标题"
-                },
-                "unwrap": "data.result.data"
-              },
+              "description": "搜索审批列表",
+              "method": "POST",
+              "path": "/approve/service/ajax-get-approve-list",
+              "encoding": "form",
               "params": [
-                {
-                  "default": "",
-                  "description": "搜索关键词",
-                  "inBody": true,
-                  "name": "keyword",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批状态: 0=审批中, 1=已通过, 2=已驳回, 3=已撤销",
-                  "inBody": true,
-                  "name": "status",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批分组 ID",
-                  "inBody": true,
-                  "name": "flowGroupId",
-                  "type": "string"
-                },
-                {
-                  "default": 1,
-                  "description": "页码",
-                  "name": "page",
-                  "type": "int"
-                },
-                {
-                  "default": 20,
-                  "description": "每页条数",
-                  "name": "pageSize",
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-get-approve-list"
+                { "name": "keyword", "type": "string", "description": "搜索关键词" },
+                { "name": "status", "type": "string", "description": "状态: 0=审批中, 1=已通过, 2=已驳回, 3=已撤销" },
+                { "name": "flowGroupId", "type": "string", "description": "审批分组 ID" },
+                { "name": "flowType", "type": "string", "description": "审批类型 ID" },
+                { "name": "employeeId", "type": "string", "description": "发起人 ID" },
+                { "name": "departmentId", "type": "string", "description": "部门 ID" },
+                { "name": "approveIds", "type": "string", "description": "审批记录 ID（多个逗号分隔）" },
+                { "name": "addtime", "type": "string", "description": "提交时间过滤类型: 空=不限, 4=自定义范围" },
+                { "name": "addtimeStart", "type": "string", "description": "提交时间起始 (YYYY-MM-DD)" },
+                { "name": "addtimeEnd", "type": "string", "description": "提交时间结束 (YYYY-MM-DD)" },
+                { "name": "modtime", "type": "string", "description": "审批时间过滤类型: 空=不限, 4=自定义范围" },
+                { "name": "modtimeStart", "type": "string", "description": "审批时间起始 (YYYY-MM-DD)" },
+                { "name": "modtimeEnd", "type": "string", "description": "审批时间结束 (YYYY-MM-DD)" },
+                { "name": "formContent", "type": "string", "description": "表单内容关键词" },
+                { "name": "page", "type": "int", "description": "页码", "default": "1" },
+                { "name": "pageSize", "type": "int", "description": "每页条数", "default": "20" }
+              ]
             },
             {
-              "body": {
-                "length": "{{.pageSize}}",
-                "monthFilter": 4,
-                "order": {
-                  "0": {
-                    "dir": "",
-                    "field": ""
-                  }
-                },
-                "search": {
-                  "regex": false,
-                  "value": "filter:keyword={{.keyword}}\u0026flowType=\u0026status={{.status}}\u0026employeeId=\u0026departmentId=\u0026approveIds=\u0026addtime=\u0026modtime=\u0026formContent=\u0026flowGroupId={{.flowGroupId}}"
-                },
-                "speedy": {
-                  "value": "filter:searchType=\u0026flowType=\u0026employeeId="
-                },
-                "speedySearch": false,
-                "start": "{{.page}}"
-              },
-              "description": "获取管理/关联审批列表",
-              "encoding": "form-nested",
-              "method": "POST",
               "name": "admin-search",
-              "output": {
-                "unwrap": "data.result.data"
-              },
+              "description": "管理员审批列表",
+              "method": "POST",
+              "path": "/approve/service/ajax-get-admin-approve-list",
+              "encoding": "form",
               "params": [
-                {
-                  "default": "",
-                  "description": "搜索关键词",
-                  "inBody": true,
-                  "name": "keyword",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批状态",
-                  "inBody": true,
-                  "name": "status",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批分组 ID",
-                  "inBody": true,
-                  "name": "flowGroupId",
-                  "type": "string"
-                },
-                {
-                  "default": 1,
-                  "description": "页码",
-                  "name": "page",
-                  "type": "int"
-                },
-                {
-                  "default": 20,
-                  "description": "每页条数",
-                  "name": "pageSize",
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-get-admin-approve-list"
+                { "name": "keyword", "type": "string", "description": "搜索关键词" },
+                { "name": "status", "type": "string", "description": "状态: 0=审批中, 1=已通过, 2=已驳回, 3=已撤销" },
+                { "name": "flowGroupId", "type": "string", "description": "审批分组 ID" },
+                { "name": "flowType", "type": "string", "description": "审批类型 ID" },
+                { "name": "employeeId", "type": "string", "description": "发起人 ID" },
+                { "name": "departmentId", "type": "string", "description": "部门 ID" },
+                { "name": "addtime", "type": "string", "description": "提交时间过滤类型" },
+                { "name": "addtimeStart", "type": "string", "description": "提交时间起始" },
+                { "name": "addtimeEnd", "type": "string", "description": "提交时间结束" },
+                { "name": "modtime", "type": "string", "description": "审批时间过滤类型" },
+                { "name": "modtimeStart", "type": "string", "description": "审批时间起始" },
+                { "name": "modtimeEnd", "type": "string", "description": "审批时间结束" },
+                { "name": "page", "type": "int", "description": "页码", "default": "1" },
+                { "name": "pageSize", "type": "int", "description": "每页条数", "default": "20" }
+              ]
             },
             {
-              "body": {
-                "length": "{{.pageSize}}",
-                "monthFilter": 4,
-                "order": {
-                  "0": {
-                    "dir": "",
-                    "field": ""
-                  }
-                },
-                "search": {
-                  "regex": false,
-                  "value": "filter:keyword={{.keyword}}"
-                },
-                "speedy": {
-                  "value": "filter:searchType=\u0026flowType=\u0026employeeId="
-                },
-                "speedySearch": false,
-                "start": "{{.page}}"
-              },
-              "description": "审批全局搜索（所有审批）",
-              "encoding": "form-nested",
-              "method": "POST",
               "name": "admin-search-all",
-              "output": {
-                "unwrap": "data.result.data"
-              },
-              "params": [
-                {
-                  "default": "",
-                  "description": "搜索关键词",
-                  "inBody": true,
-                  "name": "keyword",
-                  "type": "string"
-                },
-                {
-                  "default": 1,
-                  "description": "页码",
-                  "name": "page",
-                  "type": "int"
-                },
-                {
-                  "default": 20,
-                  "description": "每页条数",
-                  "name": "pageSize",
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-get-admin-approve-list-all"
-            },
-            {
-              "description": "获取猜你想搜下拉选项",
-              "encoding": "form",
+              "description": "全局审批搜索",
               "method": "POST",
-              "name": "speedy-search-type",
-              "params": [],
-              "path": "/approve/service/ajax-get-approve-speedy-search-type"
+              "path": "/approve/service/ajax-get-admin-approve-list-all",
+              "encoding": "form",
+              "params": [
+                { "name": "keyword", "type": "string", "description": "搜索关键词" },
+                { "name": "status", "type": "string", "description": "状态" },
+                { "name": "page", "type": "int", "description": "页码", "default": "1" },
+                { "name": "pageSize", "type": "int", "description": "每页条数", "default": "20" }
+              ]
             },
             {
-              "description": "获取各状态审批数量统计",
-              "encoding": "form",
-              "method": "GET",
               "name": "filter-num",
-              "params": [],
-              "path": "/approve/service/ajax-get-filter-num"
-            },
-            {
-              "description": "获取审批开启状态",
-              "encoding": "form",
+              "description": "各状态审批数量统计",
               "method": "GET",
+              "path": "/approve/service/ajax-get-filter-num",
+              "encoding": "form",
+              "params": []
+            },
+            {
               "name": "open-status",
-              "params": [],
-              "path": "/approve/service/ajax-get-approve-open-status"
+              "description": "审批功能开启状态",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-approve-open-status",
+              "encoding": "form",
+              "params": []
             },
             {
-              "description": "通过审批",
-              "encoding": "form",
+              "name": "speedy-search-type",
+              "description": "猜你想搜下拉选项",
               "method": "POST",
+              "path": "/approve/service/ajax-get-approve-speedy-search-type",
+              "encoding": "form",
+              "params": [
+                { "name": "employeeName", "type": "string", "description": "员工姓名" },
+                { "name": "employeeId", "type": "string", "description": "员工 ID" }
+              ]
+            },
+            {
+              "name": "get-last-sign",
+              "description": "管理员上次签名",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-last-sign",
+              "encoding": "form",
+              "params": []
+            },
+            {
               "name": "approve",
+              "description": "通过审批",
+              "method": "POST",
+              "path": "/approve/service/ajax-pass-approve-step",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批步骤 ID",
-                  "name": "flowStepId",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批意见",
-                  "name": "comment",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-pass-approve-step"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" },
+                { "name": "flowStepId", "type": "string", "description": "审批步骤 ID" },
+                { "name": "comment", "type": "string", "description": "审批意见" },
+                { "name": "atEmployeeIds", "type": "string", "description": "@员工 ID，多个逗号分隔" },
+                { "name": "confirmDate", "type": "string", "description": "确认日期" },
+                { "name": "sign", "type": "string", "description": "签名数据" }
+              ]
             },
             {
-              "description": "驳回审批",
-              "encoding": "form",
-              "method": "POST",
               "name": "reject",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批步骤 ID",
-                  "name": "flowStepId",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "驳回意见",
-                  "name": "comment",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-rejected-approve-step"
-            },
-            {
-              "body": {
-                "data": "{{.data}}",
-                "type": "{{.type}}"
-              },
-              "description": "批量通过/驳回审批",
-              "encoding": "form-nested",
+              "description": "驳回审批",
               "method": "POST",
-              "name": "batch-approve",
-              "params": [
-                {
-                  "description": "操作类型: 1=通过, 2=驳回",
-                  "name": "type",
-                  "required": true,
-                  "type": "int"
-                },
-                {
-                  "description": "批量数据 JSON 数组",
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-batch-operation-approve-step"
-            },
-            {
-              "body": {
-                "data": "{{.data}}",
-                "type": "{{.type}}"
-              },
-              "description": "批量转交审批",
-              "encoding": "form-nested",
-              "method": "POST",
-              "name": "batch-forward",
-              "params": [
-                {
-                  "description": "操作类型",
-                  "name": "type",
-                  "required": true,
-                  "type": "int"
-                },
-                {
-                  "description": "批量数据 JSON 数组",
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-batch-change-approve-step"
-            },
-            {
-              "description": "撤销审批",
+              "path": "/approve/service/ajax-rejected-approve-step",
               "encoding": "form",
-              "method": "POST",
+              "params": [
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" },
+                { "name": "flowStepId", "type": "string", "description": "审批步骤 ID" },
+                { "name": "comment", "type": "string", "description": "驳回意见" },
+                { "name": "atEmployeeIds", "type": "string", "description": "@员工 ID，多个逗号分隔" }
+              ]
+            },
+            {
               "name": "cancel",
+              "description": "撤销审批",
+              "method": "POST",
+              "path": "/approve/service/ajax-close-approve-step",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批步骤 ID",
-                  "name": "flowStepId",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "撤销说明",
-                  "name": "remark",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-close-approve-step"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" },
+                { "name": "remark", "type": "string", "description": "撤销原因" }
+              ]
             },
             {
-              "description": "转交审批",
-              "encoding": "form",
-              "method": "POST",
               "name": "forward",
+              "description": "转交审批",
+              "method": "POST",
+              "path": "/approve/service/ajax-change-approve-step",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批步骤 ID",
-                  "name": "flowStepId",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "当前审批人 ID",
-                  "name": "approverId",
-                  "type": "string"
-                },
-                {
-                  "description": "转交目标审批人 ID",
-                  "name": "nextApproverId",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "转交说明",
-                  "name": "remark",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-change-approve-step"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" },
+                { "name": "flowStepId", "type": "string", "description": "审批步骤 ID" },
+                { "name": "approverId", "type": "string", "description": "转交目标人 ID" },
+                { "name": "nextApproverId", "type": "string", "description": "下一节点审批人 ID" },
+                { "name": "remark", "type": "string", "description": "转交说明" }
+              ]
             },
             {
-              "description": "催办审批（普通审批）",
-              "encoding": "form",
+              "name": "batch-approve",
+              "description": "批量通过/驳回审批",
               "method": "POST",
+              "path": "/approve/service/ajax-batch-operation-approve-step",
+              "encoding": "form",
+              "params": [
+                { "name": "data", "type": "string", "required": true, "description": "审批数据列表 JSON" },
+                { "name": "type", "type": "int", "required": true, "description": "操作类型: 1=通过, 2=驳回" }
+              ]
+            },
+            {
+              "name": "batch-forward",
+              "description": "批量转交审批",
+              "method": "POST",
+              "path": "/approve/service/ajax-batch-change-approve-step",
+              "encoding": "form",
+              "params": [
+                { "name": "data", "type": "string", "required": true, "description": "转发数据列表 JSON" }
+              ]
+            },
+            {
+              "name": "add-sign",
+              "description": "加签",
+              "method": "POST",
+              "path": "/approve/service/ajax-increase-process-step",
+              "encoding": "form",
+              "params": [
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" },
+                { "name": "stepNodeId", "type": "string", "required": true, "description": "当前步骤节点 ID" },
+                { "name": "increaseType", "type": "int", "required": true, "description": "加签类型" },
+                { "name": "employeeIds", "type": "string", "required": true, "description": "加签员工 ID，多个逗号分隔" },
+                { "name": "flowPassType", "type": "int", "required": true, "description": "通过类型" },
+                { "name": "remark", "type": "string", "required": true, "description": "加签原因" }
+              ]
+            },
+            {
+              "name": "back-nodes",
+              "description": "获取可退回节点列表",
+              "method": "POST",
+              "path": "/approve/service/ajax-get-back-process-step",
+              "encoding": "form",
+              "params": [
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
+            },
+            {
+              "name": "send-back",
+              "description": "退回到历史节点",
+              "method": "POST",
+              "path": "/approve/service/ajax-back-process-step",
+              "encoding": "form",
+              "params": [
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" },
+                { "name": "stepNodeId", "type": "string", "required": true, "description": "当前步骤节点 ID" },
+                { "name": "backNodeId", "type": "string", "required": true, "description": "退回目标节点 ID" },
+                { "name": "remark", "type": "string", "required": true, "description": "退回原因" },
+                { "name": "reApproval", "type": "int", "description": "是否重新审批" }
+              ]
+            },
+            {
+              "name": "unmask",
+              "description": "展示掩码字段明文",
+              "method": "POST",
+              "path": "/approve/service/ajax-open-mask-fields",
+              "encoding": "form",
+              "params": [
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" },
+                { "name": "labelName", "type": "string", "required": true, "description": "字段标签名" },
+                { "name": "isOldValue", "type": "int", "required": true, "description": "是否旧值" },
+                { "name": "groupIndex", "type": "int", "required": true, "description": "分组索引" },
+                { "name": "isFixed", "type": "int", "required": true, "description": "是否固定字段" }
+              ]
+            },
+            {
               "name": "urge",
+              "description": "催办审批",
+              "method": "GET",
+              "path": "/approve/service/ajax-flow-urge",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-flow-urge"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
             },
             {
-              "description": "批量催办审批",
-              "encoding": "form",
-              "method": "POST",
-              "name": "batch-urge",
-              "params": [
-                {
-                  "description": "批量审批 ID JSON",
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-batch-flow-urge"
-            },
-            {
-              "description": "检查是否可以催办（单个）",
-              "encoding": "form",
-              "method": "POST",
               "name": "test-urge",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-test-urge"
-            },
-            {
-              "description": "检查是否可以批量催办",
+              "description": "检查是否可催办",
+              "method": "GET",
+              "path": "/approve/service/ajax-test-urge",
               "encoding": "form",
-              "method": "POST",
-              "name": "test-batch-urge",
               "params": [
-                {
-                  "description": "批量审批 ID JSON",
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-test-batch-urge"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
             },
             {
-              "description": "安全催办：先检查是否可催办，可催办则自动执行催办",
               "name": "safe-urge",
+              "description": "安全催办（先检查再催办）",
+              "params": [
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ],
               "pipeline": {
                 "steps": [
                   {
                     "id": "test",
                     "path": "/approve/service/ajax-test-urge",
-                    "method": "POST",
+                    "method": "GET",
                     "encoding": "form",
                     "params": [
-                      {
-                        "description": "审批记录 ID",
-                        "name": "sid",
-                        "required": true,
-                        "type": "string"
-                      }
+                      { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
                     ],
                     "outputKey": "testResult"
                   },
                   {
                     "id": "urge",
                     "path": "/approve/service/ajax-flow-urge",
-                    "method": "POST",
+                    "method": "GET",
                     "encoding": "form",
                     "params": [
-                      {
-                        "description": "审批记录 ID",
-                        "name": "sid",
-                        "required": true,
-                        "type": "string"
-                      }
+                      { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
                     ],
                     "outputKey": "result"
                   }
@@ -490,37 +283,46 @@
               }
             },
             {
-              "description": "安全批量催办：先检查是否可批量催办，可催办则自动执行批量催办",
+              "name": "batch-urge",
+              "description": "批量催办",
+              "method": "GET",
+              "path": "/approve/service/ajax-batch-flow-urge",
+              "encoding": "form",
+              "params": [
+                { "name": "snowIds", "type": "string", "required": true, "description": "批量审批 ID JSON" }
+              ]
+            },
+            {
+              "name": "test-batch-urge",
+              "description": "检查是否可批量催办",
+              "method": "GET",
+              "path": "/approve/service/ajax-test-batch-urge",
+              "encoding": "form",
+              "params": []
+            },
+            {
               "name": "safe-batch-urge",
+              "description": "安全批量催办（先检查再催办）",
+              "params": [
+                { "name": "snowIds", "type": "string", "required": true, "description": "批量审批 ID JSON" }
+              ],
               "pipeline": {
                 "steps": [
                   {
                     "id": "test",
                     "path": "/approve/service/ajax-test-batch-urge",
-                    "method": "POST",
+                    "method": "GET",
                     "encoding": "form",
-                    "params": [
-                      {
-                        "description": "批量审批 ID JSON",
-                        "name": "data",
-                        "required": true,
-                        "type": "string"
-                      }
-                    ],
+                    "params": [],
                     "outputKey": "testResult"
                   },
                   {
                     "id": "urge",
                     "path": "/approve/service/ajax-batch-flow-urge",
-                    "method": "POST",
+                    "method": "GET",
                     "encoding": "form",
                     "params": [
-                      {
-                        "description": "批量审批 ID JSON",
-                        "name": "data",
-                        "required": true,
-                        "type": "string"
-                      }
+                      { "name": "snowIds", "type": "string", "required": true, "description": "批量审批 ID JSON" }
                     ],
                     "outputKey": "result"
                   }
@@ -528,505 +330,228 @@
               }
             },
             {
-              "body": {
-                "length": 9999,
-                "monthFilter": 0,
-                "name": "{{.name}}",
-                "order": {
-                  "0": {
-                    "dir": "",
-                    "field": ""
-                  }
-                },
-                "search": {
-                  "regex": false,
-                  "value": "filter:keyword={{.keyword}}\u0026flowType=\u0026status=\u0026employeeId=\u0026departmentId=\u0026approveIds=\u0026addtime=\u0026modtime=\u0026formContent=\u0026flowGroupId={{.flowGroupId}}"
-                },
-                "speedy": {
-                  "value": "filter:searchType=\u0026flowType=\u0026employeeId="
-                },
-                "speedySearch": false,
-                "start": 0
-              },
-              "description": "导出审批列表",
-              "encoding": "form-nested",
-              "method": "POST",
-              "name": "export",
-              "params": [
-                {
-                  "default": "",
-                  "description": "搜索关键词",
-                  "inBody": true,
-                  "name": "keyword",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批分组 ID",
-                  "inBody": true,
-                  "name": "flowGroupId",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "导出文件名",
-                  "inBody": true,
-                  "name": "name",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-export-flow"
-            },
-            {
-              "body": {
-                "length": 9999,
-                "monthFilter": 0,
-                "order": {
-                  "0": {
-                    "dir": "",
-                    "field": ""
-                  }
-                },
-                "search": {
-                  "regex": false,
-                  "value": "filter:keyword={{.keyword}}\u0026flowType=\u0026status={{.status}}\u0026employeeId=\u0026departmentId=\u0026approveIds=\u0026addtime=\u0026modtime=\u0026formContent=\u0026flowGroupId={{.flowGroupId}}"
-                },
-                "speedy": {
-                  "value": "filter:searchType=\u0026flowType=\u0026employeeId="
-                },
-                "speedySearch": false,
-                "start": 0
-              },
-              "description": "导出前检查是否有导出权限",
-              "encoding": "form-nested",
-              "method": "POST",
-              "name": "export-check",
-              "params": [
-                {
-                  "default": "",
-                  "description": "搜索关键词",
-                  "inBody": true,
-                  "name": "keyword",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批状态",
-                  "inBody": true,
-                  "name": "status",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批分组 ID",
-                  "inBody": true,
-                  "name": "flowGroupId",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-export-flow-check"
-            },
-            {
-              "description": "管理员获取上次签名信息",
-              "encoding": "form",
-              "method": "POST",
-              "name": "get-last-sign",
-              "params": [],
-              "path": "/approve/service/ajax-get-last-sign"
-            },
-            {
-              "description": "搜索部门或员工（用于评论@功能）",
-              "encoding": "form",
-              "method": "POST",
-              "name": "search-employee",
-              "params": [
-                {
-                  "default": "",
-                  "description": "搜索关键词",
-                  "name": "keyword",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-search-department-or-employee"
-            },
-            {
-              "description": "领取证明 / 更改证明状态",
-              "encoding": "form",
-              "method": "GET",
               "name": "change-prove-status",
+              "description": "领取/更改证明状态",
+              "method": "GET",
+              "path": "/approve/service/ajax-change-prove-status",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": 0,
-                  "description": "证明状态",
-                  "name": "proveStatus",
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-change-prove-status"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" },
+                { "name": "proveStatus", "type": "int", "description": "证明状态" }
+              ]
             },
             {
-              "description": "撤销离职交接审批",
-              "encoding": "form",
-              "method": "POST",
-              "name": "cancel-handover",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "撤销原因",
-                  "name": "cancelReason",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-cancel-handover-approval"
-            },
-            {
-              "description": "获取离职确认日期",
-              "encoding": "form",
-              "method": "POST",
               "name": "get-confirm-date",
+              "description": "离职确认日期",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-confirm-date",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-confirm-date"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
             },
             {
-              "description": "转交离职交接审批",
-              "encoding": "form",
+              "name": "export-check",
+              "description": "导出前检查权限",
               "method": "POST",
-              "name": "transfer-approval",
+              "path": "/approve/service/ajax-export-flow-check",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "转交目标员工 ID",
-                  "name": "directorEmployeeId",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "转交原因",
-                  "name": "transferReason",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-transfer-approval"
+                { "name": "keyword", "type": "string", "description": "搜索关键词" },
+                { "name": "status", "type": "string", "description": "状态" },
+                { "name": "addtime", "type": "string", "description": "提交时间过滤类型" },
+                { "name": "addtimeStart", "type": "string", "description": "提交时间起始" },
+                { "name": "addtimeEnd", "type": "string", "description": "提交时间结束" },
+                { "name": "modtime", "type": "string", "description": "审批时间过滤类型" },
+                { "name": "modtimeStart", "type": "string", "description": "审批时间起始" },
+                { "name": "modtimeEnd", "type": "string", "description": "审批时间结束" }
+              ]
+            },
+            {
+              "name": "export",
+              "description": "导出审批列表",
+              "method": "POST",
+              "path": "/approve/service/ajax-export-flow",
+              "encoding": "form",
+              "params": [
+                { "name": "keyword", "type": "string", "description": "搜索关键词" },
+                { "name": "name", "type": "string", "description": "导出文件名" },
+                { "name": "addtime", "type": "string", "description": "提交时间过滤类型" },
+                { "name": "addtimeStart", "type": "string", "description": "提交时间起始" },
+                { "name": "addtimeEnd", "type": "string", "description": "提交时间结束" },
+                { "name": "modtime", "type": "string", "description": "审批时间过滤类型" },
+                { "name": "modtimeStart", "type": "string", "description": "审批时间起始" },
+                { "name": "modtimeEnd", "type": "string", "description": "审批时间结束" }
+              ]
+            },
+            {
+              "name": "export-list",
+              "description": "导出记录列表",
+              "method": "POST",
+              "path": "/support/ajax-flow-export-list",
+              "encoding": "json",
+              "inBody": true,
+              "params": [
+                { "name": "page", "type": "int", "description": "页码", "default": "1" },
+                { "name": "pageSize", "type": "int", "description": "每页条数", "default": "20" }
+              ]
+            },
+            {
+              "name": "search-employee",
+              "description": "搜索部门/员工（@功能）",
+              "method": "GET",
+              "path": "/approve/service/ajax-search-department-or-employee",
+              "encoding": "form",
+              "params": [
+                { "name": "keyword", "type": "string", "description": "搜索关键词" },
+                { "name": "type", "type": "int", "description": "类型: 1=员工, 2=部门" }
+              ]
             }
           ]
         },
         {
-          "description": "审批详情查看",
           "name": "detail",
-          "subtools": [
+          "description": "审批记录详情",
+          "tools": [
             {
-              "description": "获取审批详情",
-              "encoding": "form",
-              "method": "POST",
               "name": "get",
+              "description": "获取审批详情",
+              "method": "POST",
+              "path": "/approve/service/ajax-get-approve-detail",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": 1,
-                  "description": "详情类型: 1=详情, 2=打印",
-                  "name": "type",
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-get-approve-detail"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" },
+                { "name": "type", "type": "int", "description": "详情类型: 1=基础, 2=完整", "default": "1" }
+              ]
             },
             {
-              "description": "获取审批流程路径/历史",
-              "encoding": "form",
-              "method": "POST",
               "name": "path",
+              "description": "获取审批流转路径",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-approve-path",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-approve-path"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
             },
             {
-              "description": "获取审批打印数据",
-              "encoding": "form",
-              "method": "POST",
               "name": "print",
+              "description": "打印视图",
+              "method": "POST",
+              "path": "/approve/service/ajax-flow-print",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-flow-print"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
             },
             {
-              "description": "获取审批编辑历史",
-              "encoding": "form",
-              "method": "POST",
               "name": "edit-history",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-page-edit-history"
-            },
-            {
-              "body": {
-                "data": "{{.data}}",
-                "sid": "{{.sid}}"
-              },
-              "description": "保存审批页面编辑",
-              "encoding": "form-nested",
-              "method": "POST",
-              "name": "save-page-edit",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "inBody": true,
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "编辑数据 JSON",
-                  "inBody": true,
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-save-page-edit"
-            },
-            {
-              "description": "获取加班时间信息",
+              "description": "审批编辑历史",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-page-edit-history",
               "encoding": "form",
-              "method": "POST",
+              "params": [
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
+            },
+            {
+              "name": "confirm-date",
+              "description": "获取离职确认日期",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-confirm-date",
+              "encoding": "form",
+              "params": [
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
+            },
+            {
+              "name": "bdk-count",
+              "description": "获取补打卡次数",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-bdk-count",
+              "encoding": "form",
+              "params": [
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
+            },
+            {
               "name": "overtime-hour",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-approve-over-timehour"
-            },
-            {
-              "description": "获取可退回的审批节点列表",
+              "description": "获取加班时长",
+              "method": "POST",
+              "path": "/approve/service/ajax-get-approve-over-timehour",
               "encoding": "form",
-              "method": "POST",
-              "name": "back-process-step",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-back-process-step"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
             },
             {
-              "body": {
-                "data": "{{.data}}",
-                "sid": "{{.sid}}"
-              },
-              "description": "执行审批退回操作",
-              "encoding": "form-nested",
+              "name": "save-edit",
+              "description": "保存审批编辑",
               "method": "POST",
-              "name": "save-back-process-step",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "inBody": true,
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "退回节点数据 JSON",
-                  "inBody": true,
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-back-process-step"
-            },
-            {
-              "body": {
-                "data": "{{.data}}",
-                "sid": "{{.sid}}"
-              },
-              "description": "执行加签操作",
-              "encoding": "form-nested",
-              "method": "POST",
-              "name": "increase-process-step",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "inBody": true,
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "加签数据 JSON",
-                  "inBody": true,
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-increase-process-step"
-            },
-            {
-              "body": {
-                "data": "{{.data}}",
-                "sid": "{{.sid}}"
-              },
-              "description": "掩码字段获取明文",
-              "encoding": "form-nested",
-              "method": "POST",
-              "name": "open-mask-field",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "inBody": true,
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "掩码字段数据 JSON",
-                  "inBody": true,
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-open-mask-fields"
-            },
-            {
-              "body": {
-                "data": "{{.data}}",
-                "sid": "{{.sid}}"
-              },
-              "description": "审批通过前校验必填项",
-              "encoding": "form-nested",
-              "method": "POST",
-              "name": "check-form-required",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "inBody": true,
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "校验数据 JSON",
-                  "inBody": true,
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-check-form-required"
-            },
-            {
-              "body": {
-                "data": "{{.data}}",
-                "sid": "{{.sid}}"
-              },
-              "description": "审批业务字段校验",
-              "encoding": "form-nested",
-              "method": "POST",
-              "name": "check-biz-field",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "inBody": true,
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "校验数据 JSON",
-                  "inBody": true,
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-check-biz-field"
-            },
-            {
-              "description": "获取离职交接审批详情",
+              "path": "/approve/service/ajax-save-page-edit",
               "encoding": "form",
-              "method": "POST",
-              "name": "handover-detail",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": 0,
-                  "description": "是否打印视图",
-                  "name": "isPrint",
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-get-handover-approve-detail"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" },
+                { "name": "data", "type": "string", "required": true, "description": "编辑数据 JSON" }
+              ]
+            },
+            {
+              "name": "check-form",
+              "description": "校验表单必填字段",
+              "method": "POST",
+              "path": "/approve/service/ajax-check-form-required",
+              "encoding": "form",
+              "params": [
+                { "name": "stepNodeId", "type": "string", "required": true, "description": "步骤节点 ID" }
+              ]
+            },
+            {
+              "name": "check-biz",
+              "description": "校验业务字段",
+              "method": "POST",
+              "path": "/approve/service/ajax-check-biz-field",
+              "encoding": "form",
+              "params": [
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" },
+                { "name": "data", "type": "string", "required": true, "description": "校验数据 JSON" }
+              ]
+            },
+            {
+              "name": "headcount",
+              "description": "增编详情（编辑模式）",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-department-headcount",
+              "encoding": "form",
+              "params": [
+                { "name": "headcountDepartmentId", "type": "string", "required": true, "description": "编制部门 ID" },
+                { "name": "applyForExpansion", "type": "int", "required": true, "description": "申请编制数" },
+                { "name": "startValue", "type": "string", "required": true, "description": "开始月份 YYYY-MM" },
+                { "name": "endValue", "type": "string", "required": true, "description": "结束月份 YYYY-MM" }
+              ]
+            },
+            {
+              "name": "headcount-detail",
+              "description": "增编明细（详情模式）",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-department-headcount-detail",
+              "encoding": "form",
+              "params": [
+                { "name": "headcountDepartmentId", "type": "string", "required": true, "description": "编制部门 ID" },
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
             }
           ]
         },
         {
-          "description": "审批类型管理",
           "name": "manage",
-          "subtools": [
+          "description": "审批类型管理",
+          "tools": [
             {
-              "description": "列出所有审批分组下的类型（自动获取分组并列出类型，并发拉取所有分组）",
               "name": "list-all-types",
+              "description": "一键列出所有分组及审批类型（推荐）",
+              "params": [
+                { "name": "groupId", "type": "string", "description": "审批分组 ID（不传则全量）" }
+              ],
               "pipeline": {
                 "steps": [
                   {
@@ -1045,7 +570,7 @@
                       {
                         "name": "groupId",
                         "type": "string",
-                        "description": "审批分组 ID（从分组列表逐项获取）",
+                        "description": "审批分组 ID",
                         "default": "{{.item.groupId}}"
                       }
                     ],
@@ -1059,857 +584,591 @@
                     }
                   }
                 ]
-              },
-              "output": {
-                "labels": {
-                  "flowSettingId": "类型ID",
-                  "flowType": "流程类型",
-                  "name": "名称",
-                  "openStatus": "启用状态",
-                  "type": "自定义",
-                  "complete": "是否完整"
-                }
               }
             },
             {
-              "description": "列出所有审批分组的元信息（分组ID、名称、排序等），无需参数。区别于 list（按分组列出审批类型明细，需传 groupId）",
-              "encoding": "form",
-              "method": "GET",
               "name": "list-groups",
-              "output": {
-                "labels": {
-                  "groupEnName": "英文名称",
-                  "groupId": "分组ID",
-                  "groupName": "分组名称",
-                  "isFixed": "是否固定",
-                  "orderNum": "排序"
-                }
-              },
-              "params": [],
-              "path": "/approve/service/ajax-get-flow-group"
-            },
-            {
-              "body": {
-                "groupId": "{{.groupId}}",
-                "name": "{{.name}}"
-              },
-              "description": "新增或重命名审批分组",
-              "encoding": "form-nested",
-              "method": "POST",
-              "name": "save-group",
-              "params": [
-                {
-                  "description": "分组名称",
-                  "inBody": true,
-                  "name": "name",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "分组 ID（重命名时传入）",
-                  "inBody": true,
-                  "name": "groupId",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-save-flow-group"
-            },
-            {
-              "body": {
-                "groupId": "{{.groupId}}"
-              },
-              "description": "删除审批分组",
-              "encoding": "form-nested",
-              "method": "POST",
-              "name": "remove-group",
-              "params": [
-                {
-                  "description": "分组 ID",
-                  "inBody": true,
-                  "name": "groupId",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-remove-flow-group"
-            },
-            {
-              "description": "按分组列出审批类型明细（需传入 groupId 参数），返回指定分组下的审批类型列表。区别于 list-groups（列出分组元信息，无需参数）",
-              "encoding": "form",
+              "description": "列出所有审批分组",
               "method": "GET",
+              "path": "/approve/service/ajax-get-flow-group",
+              "encoding": "form",
+              "params": []
+            },
+            {
               "name": "list",
-              "output": {
-                "labels": {
-                  "complete": "是否完整",
-                  "flowSettingId": "类型ID",
-                  "flowType": "流程类型",
-                  "name": "名称",
-                  "openStatus": "启用状态",
-                  "type": "自定义"
-                }
-              },
+              "description": "按分组列出审批类型",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-flow-setting",
+              "encoding": "form",
               "params": [
-                {
-                  "default": "",
-                  "description": "审批分组 ID",
-                  "name": "groupId",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-flow-setting"
+                { "name": "groupId", "type": "string", "required": true, "description": "审批分组 ID" }
+              ]
             },
             {
-              "description": "获取审批类型详情",
-              "encoding": "form",
-              "method": "GET",
               "name": "get",
-              "params": [
-                {
-                  "description": "审批类型 ID",
-                  "name": "settingId",
-                  "queryName": "flowSettingId",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-flow-setting-new"
-            },
-            {
-              "description": "检查审批类型名称是否重复",
-              "encoding": "form",
+              "description": "获取审批类型配置详情",
               "method": "GET",
-              "name": "check-name",
+              "path": "/approve/service/ajax-get-flow-setting-new",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批类型名称",
-                  "name": "name",
-                  "queryName": "flowName",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "英文名称",
-                  "name": "nameEng",
-                  "queryName": "flowNameEng",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "排除的类型 ID",
-                  "name": "settingId",
-                  "queryName": "flowSettingId",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-check-flow-name"
+                { "name": "settingId", "type": "string", "required": true, "description": "审批类型 ID" }
+              ]
             },
             {
-              "body": {
-                "data": "{\"flowName\":\"{{.name}}\",\"flowNameEng\":\"{{.nameEng}}\",\"desc\":\"{{.description}}\",\"flowGroupId\":\"{{.groupId}}\",\"type\":0,\"leaderOnly\":0,\"flowScope\":[],\"employeeReplace\":0,\"leaderReplace\":0,\"batchInitiation\":0,\"flowType\":0,\"unionSet\":0,\"isReplace\":0,\"targetReplaceType\":[],\"flowReplaceScope\":[],\"roleReplaceScope\":[],\"flowScopeOptions\":[]}"
-              },
+              "name": "create",
               "description": "创建审批类型",
-              "encoding": "form-nested",
               "method": "POST",
-              "name": "create",
+              "path": "/approve/service/ajax-add-flow-setting",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批类型名称",
-                  "inBody": true,
-                  "name": "name",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "英文名称",
-                  "inBody": true,
-                  "name": "nameEng",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "描述",
-                  "inBody": true,
-                  "name": "description",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "所属分组 ID",
-                  "inBody": true,
-                  "name": "groupId",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-add-flow-setting"
+                { "name": "name", "type": "string", "required": true, "description": "审批类型名称" },
+                { "name": "nameEng", "type": "string", "description": "英文名称" },
+                { "name": "description", "type": "string", "description": "描述" },
+                { "name": "groupId", "type": "string", "description": "分组 ID" }
+              ]
             },
             {
+              "name": "update",
               "description": "更新审批类型配置",
-              "encoding": "form",
               "method": "POST",
-              "name": "update",
+              "path": "/approve/service/ajax-add-flow-setting",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批类型 ID",
-                  "name": "settingId",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "审批类型名称",
-                  "name": "name",
-                  "type": "string"
-                },
-                {
-                  "default": "basic",
-                  "description": "子模块: basic|form|flow|advanced",
-                  "name": "sub",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-add-flow-setting"
+                { "name": "settingId", "type": "string", "required": true, "description": "审批类型 ID" },
+                { "name": "name", "type": "string", "description": "新名称" },
+                { "name": "sub", "type": "string", "description": "子模块: basic|form|flow|advanced", "default": "basic" }
+              ]
             },
             {
+              "name": "delete",
               "description": "删除审批类型",
-              "encoding": "form",
               "method": "POST",
-              "name": "delete",
+              "path": "/approve/service/ajax-delete-custom-flow-new",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批类型 ID",
-                  "name": "settingId",
-                  "queryName": "flowSettingId",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "流程类型",
-                  "name": "flowType",
-                  "required": true,
-                  "type": "int"
-                },
-                {
-                  "default": 0,
-                  "description": "是否为旧审批类型: 0=新的, 1=旧的",
-                  "name": "isOld",
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-delete-custom-flow-new"
+                { "name": "flowType", "type": "int", "required": true, "description": "流程类型" },
+                { "name": "settingId", "type": "string", "required": true, "description": "审批类型 ID", "queryName": "flowSettingId" }
+              ]
             },
             {
-              "description": "启用/停用审批类型",
-              "encoding": "form",
-              "method": "POST",
               "name": "toggle",
+              "description": "启停审批类型",
+              "method": "POST",
+              "path": "/approve/service/ajax-operate-switch",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批类型 ID",
-                  "name": "settingId",
-                  "queryName": "flowSettingId",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "流程类型",
-                  "name": "flowType",
-                  "required": true,
-                  "type": "int"
-                },
-                {
-                  "default": "on",
-                  "description": "启用状态: on|off",
-                  "name": "status",
-                  "queryName": "openStatus",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-operate-switch"
+                { "name": "flowType", "type": "int", "required": true, "description": "流程类型" },
+                { "name": "openStatus", "type": "string", "required": true, "description": "开关: on=启用, off=停用" },
+                { "name": "settingId", "type": "string", "required": true, "description": "审批类型 ID", "queryName": "flowSettingId" }
+              ]
             },
             {
-              "description": "预览审批表单",
-              "encoding": "form",
-              "method": "POST",
               "name": "preview",
-              "params": [
-                {
-                  "description": "审批类型 ID",
-                  "name": "settingId",
-                  "queryName": "flowSettingId",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "预览员工 ID",
-                  "name": "employeeId",
-                  "type": "string"
-                },
-                {
-                  "description": "流程类型",
-                  "name": "flowType",
-                  "required": true,
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-get-flow-preview-form"
-            },
-            {
-              "description": "获取新增审批类型时的初始数据",
-              "encoding": "form",
-              "method": "GET",
-              "name": "get-init",
-              "params": [],
-              "path": "/approve/service/ajax-get-init-flow-setting-new"
-            },
-            {
-              "description": "获取有权限的审批类型列表",
-              "encoding": "form",
+              "description": "预览审批表单/流程",
               "method": "POST",
-              "name": "list-permission",
-              "params": [],
-              "path": "/approve/service/ajax-get-flow-list-with-permissions"
-            },
-            {
-              "description": "获取关联审批类型列表",
+              "path": "/approve/service/ajax-get-flow-preview-form",
               "encoding": "form",
-              "method": "GET",
-              "name": "list-related",
-              "params": [],
-              "path": "/approve/service/ajax-get-related-approve-type-list"
-            },
-            {
-              "description": "获取审批流详情",
-              "encoding": "form",
-              "method": "GET",
-              "name": "get-flow-detail",
               "params": [
-                {
-                  "description": "审批类型 ID",
-                  "name": "settingId",
-                  "queryName": "flowSettingId",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "流程类型",
-                  "name": "flowType",
-                  "required": true,
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-get-approve-flow-detail-new"
+                { "name": "flowType", "type": "int", "required": true, "description": "流程类型" },
+                { "name": "settingId", "type": "string", "required": true, "description": "审批类型 ID", "queryName": "flowSettingId" },
+                { "name": "employeeId", "type": "string", "description": "员工 ID（模拟该员工视角预览）" }
+              ]
             },
             {
-              "body": {
-                "data": "{{.data}}"
-              },
-              "description": "保存审批流配置",
-              "encoding": "json",
-              "method": "POST",
-              "name": "save-flow-detail",
-              "params": [
-                {
-                  "description": "审批流数据 JSON",
-                  "inBody": true,
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-save-approve-flow-detail-new"
-            },
-            {
-              "description": "校验审批流获取问题节点",
-              "encoding": "form",
-              "method": "POST",
-              "name": "verify-flow",
-              "params": [
-                {
-                  "description": "审批类型 ID",
-                  "name": "settingId",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "流程类型",
-                  "name": "flowType",
-                  "required": true,
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-verification-setting"
-            },
-            {
-              "description": "复制审批流到目标类型",
-              "encoding": "form",
-              "method": "POST",
               "name": "copy-flow",
-              "params": [
-                {
-                  "description": "目标类型 ID",
-                  "name": "settingId",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "源类型 ID",
-                  "name": "coverSettingId",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "流程类型",
-                  "name": "flowType",
-                  "required": true,
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-cover-approve-detail-new"
-            },
-            {
-              "description": "获取审批流分支条件（如请假类型）",
+              "description": "复制审批流配置到目标类型",
+              "method": "POST",
+              "path": "/approve/service/ajax-cover-approve-detail-new",
               "encoding": "form",
-              "method": "GET",
-              "name": "get-charge-setting",
-              "params": [],
-              "path": "/approve/service/ajax-get-charge-setting"
+              "params": [
+                { "name": "coverSettingId", "type": "int", "required": true, "description": "源类型 ID" },
+                { "name": "settingId", "type": "int", "required": true, "description": "目标类型 ID" }
+              ]
             },
             {
+              "name": "verify",
+              "description": "验证审批流程配置",
+              "method": "GET",
+              "path": "/approve/service/ajax-verification-setting",
+              "encoding": "form",
+              "params": [
+                { "name": "flowType", "type": "int", "required": true, "description": "流程类型" },
+                { "name": "settingId", "type": "int", "required": true, "description": "审批类型 ID" }
+              ]
+            },
+            {
+              "name": "flow-switch",
+              "description": "获取审批发起范围",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-flow-switch",
+              "encoding": "form",
+              "params": [
+                { "name": "flowType", "type": "int", "required": true, "description": "审批类型" }
+              ]
+            },
+            {
+              "name": "save-flow-switch",
+              "description": "保存审批发起范围",
+              "method": "POST",
+              "path": "/approve/service/ajax-save-flow-switch",
+              "encoding": "form",
+              "params": [
+                { "name": "flowType", "type": "int", "required": true, "description": "审批类型" },
+                { "name": "adminIsOpen", "type": "int", "description": "管理员可发起: 1=是, 0=否", "default": "1" },
+                { "name": "leaderIsOpen", "type": "int", "description": "主管可发起: 1=是, 0=否", "default": "1" },
+                { "name": "employeeIsOpen", "type": "int", "description": "员工可发起: 1=是, 0=否", "default": "1" }
+              ]
+            },
+            {
+              "name": "charge-setting",
+              "description": "获取审批分支条件",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-charge-setting",
+              "encoding": "form",
+              "params": []
+            },
+            {
+              "name": "save-group",
+              "description": "新增/重命名审批分组",
+              "method": "POST",
+              "path": "/approve/service/ajax-save-flow-group",
+              "encoding": "form",
+              "params": [
+                { "name": "name", "type": "string", "required": true, "description": "分组名称" },
+                { "name": "groupId", "type": "string", "description": "分组 ID（重命名时传入）" }
+              ]
+            },
+            {
+              "name": "remove-group",
+              "description": "删除审批分组",
+              "method": "POST",
+              "path": "/approve/service/ajax-remove-flow-group",
+              "encoding": "form",
+              "params": [
+                { "name": "groupId", "type": "string", "required": true, "description": "分组 ID" }
+              ]
+            },
+            {
+              "name": "type-ids",
+              "description": "获取新审批类型 ID 列表",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-flow-setting-new-list",
+              "encoding": "form",
+              "params": []
+            },
+            {
+              "name": "init-create",
+              "description": "获取新建审批初始化数据",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-init-flow-setting-new",
+              "encoding": "form",
+              "params": []
+            },
+            {
+              "name": "check-name",
+              "description": "检查审批名称是否重复",
+              "method": "GET",
+              "path": "/approve/service/ajax-check-flow-name",
+              "encoding": "form",
+              "params": [
+                { "name": "settingId", "type": "int", "required": true, "description": "设置 ID" },
+                { "name": "flowName", "type": "string", "required": true, "description": "审批名称" },
+                { "name": "flowNameEng", "type": "string", "description": "英文名称" }
+              ]
+            },
+            {
+              "name": "get-flow-detail-new",
+              "description": "获取审批流详情（新）",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-approve-flow-detail-new",
+              "encoding": "form",
+              "params": [
+                { "name": "type", "type": "int", "description": "类型" },
+                { "name": "flowSettingId", "type": "string", "description": "审批设置 ID" }
+              ]
+            },
+            {
+              "name": "get-flow-detail",
+              "description": "获取审批流详情（旧）",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-approve-flow-detail",
+              "encoding": "form",
+              "params": [
+                { "name": "type", "type": "int", "description": "流程类型" }
+              ]
+            },
+            {
+              "name": "save-flow-detail-new",
+              "description": "保存审批流设置（新）",
+              "method": "POST",
+              "path": "/approve/service/ajax-save-approve-flow-detail-new",
+              "encoding": "form",
+              "params": [
+                { "name": "data", "type": "string", "required": true, "description": "审批流数据 JSON" }
+              ]
+            },
+            {
+              "name": "get-advanced",
               "description": "获取审批高级设置",
-              "encoding": "form",
               "method": "GET",
-              "name": "get-advanced-setting",
+              "path": "/approve/service/ajax-get-setting-detail",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批类型 ID",
-                  "name": "settingId",
-                  "queryName": "flowSettingId",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-setting-detail"
+                { "name": "settingId", "type": "string", "required": true, "description": "审批类型 ID", "queryName": "flowSettingId" }
+              ]
             },
             {
-              "body": {
-                "data": "{{.data}}"
-              },
+              "name": "save-advanced",
               "description": "保存审批高级设置",
-              "encoding": "json",
               "method": "POST",
-              "name": "save-advanced-setting",
+              "path": "/approve/service/ajax-save-setting-detail",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "高级设置数据 JSON",
-                  "inBody": true,
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-save-setting-detail"
+                { "name": "data", "type": "string", "required": true, "description": "设置数据 JSON" }
+              ]
             },
             {
-              "description": "获取所有审批角色列表（用于审批流节点配置）",
-              "encoding": "form",
-              "method": "GET",
               "name": "get-all-roles",
-              "params": [],
-              "path": "/approve/service/ajax-get-all-role"
+              "description": "获取所有审批角色",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-all-role",
+              "encoding": "form",
+              "params": []
             }
           ]
         },
         {
-          "description": "审批角色管理",
           "name": "role",
-          "subtools": [
+          "description": "审批角色管理",
+          "tools": [
             {
+              "name": "list",
               "description": "列出审批角色",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-flow-role-list",
               "encoding": "form",
-              "method": "POST",
-              "name": "list",
               "params": [
-                {
-                  "default": "",
-                  "description": "搜索关键词",
-                  "name": "keyword",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-flow-role-list"
+                { "name": "keyword", "type": "string", "description": "搜索关键词", "queryName": "keyWord" }
+              ]
             },
             {
-              "description": "获取角色详情",
-              "encoding": "form",
-              "method": "POST",
               "name": "get",
+              "description": "获取角色详情",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-flow-role-detail",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "角色 ID",
-                  "name": "roleId",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-flow-role-detail"
+                { "name": "roleId", "type": "string", "required": true, "description": "角色 ID" }
+              ]
             },
             {
+              "name": "create",
               "description": "创建审批角色",
-              "encoding": "form",
               "method": "POST",
-              "name": "create",
+              "path": "/approve/service/ajax-save-flow-role",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "角色名称",
-                  "name": "name",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "角色成员 JSON",
-                  "name": "members",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-save-flow-role"
+                { "name": "name", "type": "string", "required": true, "description": "角色名称" },
+                { "name": "members", "type": "string", "description": "角色成员 JSON" }
+              ]
             },
             {
-              "description": "更新审批角色",
-              "encoding": "form",
-              "method": "POST",
               "name": "update",
+              "description": "更新审批角色",
+              "method": "POST",
+              "path": "/approve/service/ajax-save-flow-role",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "角色 ID",
-                  "name": "roleId",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "角色名称",
-                  "name": "name",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "角色成员 JSON",
-                  "name": "members",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-save-flow-role"
+                { "name": "roleId", "type": "string", "required": true, "description": "角色 ID" },
+                { "name": "name", "type": "string", "description": "新名称" },
+                { "name": "members", "type": "string", "description": "新成员 JSON" }
+              ]
             },
             {
-              "description": "删除审批角色",
-              "encoding": "form",
-              "method": "POST",
               "name": "delete",
+              "description": "删除审批角色",
+              "method": "POST",
+              "path": "/approve/service/ajax-delete-flow-role",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "角色 ID",
-                  "name": "roleId",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-delete-flow-role"
+                { "name": "roleId", "type": "string", "required": true, "description": "角色 ID" }
+              ]
             },
             {
-              "description": "查看角色使用情况",
-              "encoding": "form",
-              "method": "POST",
               "name": "usage",
-              "params": [
-                {
-                  "description": "角色 ID",
-                  "name": "roleId",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-flow-role-used"
-            },
-            {
-              "description": "获取角色中员工的部门信息",
-              "encoding": "form",
-              "method": "POST",
-              "name": "department-tips",
-              "params": [
-                {
-                  "description": "员工 ID JSON 数组",
-                  "name": "employeeIds",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-department-tips"
-            },
-            {
-              "description": "获取所有角色列表（简化版）",
-              "encoding": "form",
+              "description": "查看角色使用情况",
               "method": "GET",
-              "name": "list-all",
-              "params": [],
-              "path": "/approve/service/ajax-get-all-role"
+              "path": "/approve/service/ajax-get-flow-role-used",
+              "encoding": "form",
+              "params": [
+                { "name": "roleId", "type": "string", "required": true, "description": "角色 ID" }
+              ]
+            },
+            {
+              "name": "dept-tips",
+              "description": "查询员工部门链路",
+              "method": "POST",
+              "path": "/approve/service/ajax-get-department-tips",
+              "encoding": "form",
+              "params": [
+                { "name": "employeeIds", "type": "string", "required": true, "description": "员工 ID 列表 JSON 数组" }
+              ]
             }
           ]
         },
         {
-          "description": "审批委托管理",
           "name": "entrust",
-          "subtools": [
+          "description": "审批委托管理",
+          "tools": [
             {
-              "description": "列出审批委托",
-              "encoding": "form",
-              "method": "GET",
               "name": "list",
+              "description": "列出审批委托",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-flow-entrust-list",
+              "encoding": "form",
               "params": [
-                {
-                  "default": 1,
-                  "description": "页码",
-                  "name": "page",
-                  "type": "int"
-                },
-                {
-                  "default": 20,
-                  "description": "每页条数",
-                  "name": "pageSize",
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-get-flow-entrust-list"
+                { "name": "pageNum", "type": "int", "description": "页码", "default": "1" },
+                { "name": "pageSize", "type": "int", "description": "每页条数", "default": "20" }
+              ]
             },
             {
-              "description": "创建审批委托",
-              "encoding": "form",
-              "method": "POST",
               "name": "create",
-              "params": [
-                {
-                  "description": "被委托人 ID",
-                  "name": "agentId",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "default": 0,
-                  "description": "委托范围: 0=全部, 1=部分",
-                  "name": "scope",
-                  "type": "int"
-                },
-                {
-                  "default": "",
-                  "description": "审批类型 ID 列表",
-                  "name": "flowSettingIds",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "开始时间 (YYYY-MM-DD)",
-                  "name": "startTime",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "结束时间 (YYYY-MM-DD)",
-                  "name": "endTime",
-                  "type": "string"
-                },
-                {
-                  "default": "",
-                  "description": "委托原因",
-                  "name": "reason",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-append-entrust"
-            },
-            {
-              "description": "取消委托",
-              "encoding": "form",
+              "description": "创建委托",
               "method": "POST",
+              "path": "/approve/service/ajax-append-entrust",
+              "encoding": "form",
+              "params": [
+                { "name": "agentId", "type": "string", "required": true, "description": "被委托人 ID" },
+                { "name": "scope", "type": "int", "description": "委托范围: 0=全部, 1=指定类型" },
+                { "name": "startTime", "type": "string", "description": "开始日期 YYYY-MM-DD" },
+                { "name": "endTime", "type": "string", "description": "结束日期 YYYY-MM-DD" },
+                { "name": "reason", "type": "string", "description": "委托原因" }
+              ]
+            },
+            {
               "name": "cancel",
+              "description": "取消委托",
+              "method": "POST",
+              "path": "/approve/service/ajax-cancel-entrust",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "委托记录 ID",
-                  "name": "id",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-cancel-entrust"
+                { "name": "id", "type": "string", "required": true, "description": "委托 ID" }
+              ]
             },
             {
-              "description": "配置委托设置",
-              "encoding": "form",
-              "method": "GET",
               "name": "setting",
+              "description": "委托设置",
+              "method": "GET",
+              "path": "/approve/service/ajax-flow-entrust-setting",
+              "encoding": "form",
               "params": [
-                {
-                  "default": "1",
-                  "description": "委托状态: 0=关闭, 1=开启",
-                  "name": "status",
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-flow-entrust-setting"
+                { "name": "status", "type": "int", "description": "状态: 0=关闭, 1=开启" }
+              ]
             },
             {
-              "description": "获取所有审批类型列表（无权限过滤，用于委托设置）",
-              "encoding": "form",
+              "name": "type-list",
+              "description": "委托可选审批类型列表",
               "method": "GET",
-              "name": "list-flow-types",
-              "params": [],
-              "path": "/approve/service/ajax-get-flow-setting-new-list"
+              "path": "/approve/service/ajax-get-flow-setting-new-list",
+              "encoding": "form",
+              "params": []
             }
           ]
         },
         {
-          "description": "证明与打印",
           "name": "proof",
-          "subtools": [
+          "description": "证明与打印",
+          "tools": [
             {
+              "name": "snap",
               "description": "获取证明快照",
-              "encoding": "form",
               "method": "POST",
-              "name": "get-proof-snap",
+              "path": "/approve/service/ajax-get-proof-snap",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-proof-snap"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
             },
             {
-              "description": "添加/更新证明开具记录",
-              "encoding": "form",
+              "name": "records",
+              "description": "证明开具记录",
               "method": "POST",
-              "name": "add-proof-record",
+              "path": "/approve/service/ajax-search-proof-record",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "记录状态",
-                  "name": "recordStatus",
-                  "required": true,
-                  "type": "int"
-                }
-              ],
-              "path": "/approve/service/ajax-add-proof-record"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
             },
             {
-              "description": "查询证明开具记录",
-              "encoding": "form",
+              "name": "add-record",
+              "description": "添加证明开具记录",
               "method": "POST",
-              "name": "search-proof-record",
+              "path": "/approve/service/ajax-add-proof-record",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-search-proof-record"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" },
+                { "name": "recordStatus", "type": "int", "required": true, "description": "记录状态" }
+              ]
             },
             {
-              "description": "获取补签次数",
-              "encoding": "form",
-              "method": "POST",
-              "name": "get-bdk-count",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-bdk-count"
-            },
-            {
-              "description": "生成打印记录",
-              "encoding": "form",
-              "method": "POST",
-              "name": "print-flow",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-print-flow"
-            },
-            {
-              "description": "获取打印权限配置",
-              "encoding": "form",
-              "method": "POST",
               "name": "edit-print",
-              "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-edit-print"
-            },
-            {
-              "description": "保存打印权限配置",
-              "encoding": "form",
+              "description": "打印编辑（获取打印权限配置）",
               "method": "POST",
-              "name": "save-print",
+              "path": "/approve/service/ajax-edit-print",
+              "encoding": "form",
               "params": [
-                {
-                  "description": "审批记录 ID",
-                  "name": "sid",
-                  "required": true,
-                  "type": "string"
-                },
-                {
-                  "description": "打印权限数据 JSON",
-                  "name": "data",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-saves-flow-print"
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
             },
             {
+              "name": "print",
+              "description": "审批打印",
+              "method": "POST",
+              "path": "/approve/service/ajax-flow-print",
+              "encoding": "form",
+              "params": [
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
+            },
+            {
+              "name": "generate-print",
+              "description": "生成打印记录",
+              "method": "POST",
+              "path": "/approve/service/ajax-print-flow",
+              "encoding": "form",
+              "params": [
+                { "name": "sid", "type": "string", "required": true, "description": "审批记录 ID" }
+              ]
+            },
+            {
+              "name": "hide-fields",
               "description": "获取打印可隐藏字段",
+              "method": "GET",
+              "path": "/approve/service/ajax-get-print-hide-fields",
               "encoding": "form",
-              "method": "POST",
-              "name": "get-print-hide-fields",
               "params": [
-                {
-                  "description": "审批类型 ID",
-                  "name": "settingId",
-                  "required": true,
-                  "type": "string"
-                }
-              ],
-              "path": "/approve/service/ajax-get-print-hide-fields"
+                { "name": "settingId", "type": "int", "required": true, "description": "审批类型设置 ID" }
+              ]
+            },
+            {
+              "name": "save-print",
+              "description": "保存打印权限配置",
+              "method": "POST",
+              "path": "/approve/service/ajax-saves-flow-print",
+              "encoding": "form",
+              "params": [
+                { "name": "data", "type": "string", "required": true, "description": "打印权限数据 JSON" }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "dismiss-handover",
+          "description": "离职交接管理",
+          "tools": [
+            {
+              "name": "list-settings",
+              "description": "离职交接方案列表",
+              "method": "GET",
+              "path": "/approval/dimission-setting/ajax-get-dimission-setting-list",
+              "encoding": "form",
+              "params": []
+            },
+            {
+              "name": "get-setting",
+              "description": "交接方案详情",
+              "method": "GET",
+              "path": "/approval/dimission-setting/ajax-get-dimission-setting",
+              "encoding": "form",
+              "params": [
+                { "name": "handoverBasicId", "type": "int", "required": true, "description": "方案 ID" }
+              ]
+            },
+            {
+              "name": "save-setting",
+              "description": "保存交接方案",
+              "method": "POST",
+              "path": "/approval/dimission-setting/ajax-update-dimission-setting",
+              "encoding": "form",
+              "params": [
+                { "name": "data", "type": "string", "required": true, "description": "方案数据 JSON" }
+              ]
+            },
+            {
+              "name": "delete-setting",
+              "description": "删除交接方案",
+              "method": "POST",
+              "path": "/approval/dimission-setting/ajax-delete-dimission-setting",
+              "encoding": "form",
+              "params": [
+                { "name": "handoverBasicId", "type": "int", "required": true, "description": "方案 ID" }
+              ]
+            },
+            {
+              "name": "copy-setting",
+              "description": "复制交接方案",
+              "method": "POST",
+              "path": "/approval/dimission-setting/ajax-copy-dimission-setting",
+              "encoding": "form",
+              "params": [
+                { "name": "data", "type": "string", "required": true, "description": "方案数据 JSON" }
+              ]
+            },
+            {
+              "name": "scope-filter",
+              "description": "适用范围筛选项",
+              "method": "GET",
+              "path": "/approval/dimission-setting/ajax-get-handover-scope-filter",
+              "encoding": "form",
+              "params": []
+            },
+            {
+              "name": "detail",
+              "description": "交接审批详情",
+              "method": "GET",
+              "path": "/approval/dimission-setting/ajax-get-handover-approve-detail",
+              "encoding": "form",
+              "params": [
+                { "name": "flowProcessId", "type": "int", "required": true, "description": "审批流程 ID" },
+                { "name": "isPrint", "type": "int", "description": "是否打印: 0=否, 1=是", "default": "0" }
+              ]
+            },
+            {
+              "name": "transfer",
+              "description": "转交离职交接审批",
+              "method": "POST",
+              "path": "/approval/dimission-setting/ajax-transfer-approval",
+              "encoding": "form",
+              "params": [
+                { "name": "approvalId", "type": "int", "required": true, "description": "审批 ID" },
+                { "name": "directorEmployeeId", "type": "string", "required": true, "description": "转交给的员工 ID" },
+                { "name": "transferReason", "type": "string", "required": true, "description": "转交原因" }
+              ]
+            },
+            {
+              "name": "cancel",
+              "description": "撤销离职交接审批",
+              "method": "POST",
+              "path": "/approval/dimission-setting/ajax-cancel-handover-approval",
+              "encoding": "form",
+              "params": [
+                { "name": "approvalId", "type": "int", "required": true, "description": "审批 ID" },
+                { "name": "cancelReason", "type": "string", "required": true, "description": "撤销原因" }
+              ]
+            },
+            {
+              "name": "urge",
+              "description": "催办离职交接",
+              "method": "POST",
+              "path": "/approval/dimission-setting/ajax-handover-approval-urge",
+              "encoding": "form",
+              "params": [
+                { "name": "approvalId", "type": "int", "required": true, "description": "审批 ID" }
+              ]
             }
           ]
         }
       ]
     }
-  ],
-  "version": "1"
+  ]
 }

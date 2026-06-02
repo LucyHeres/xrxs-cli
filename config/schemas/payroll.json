@@ -1,0 +1,21 @@
+{
+  "version": "1",
+  "products": [
+    {
+      "name": "payroll",
+      "description": "薪酬模块：工资单、薪酬方案管理",
+      "tools": [
+        {
+          "name": "bill",
+          "description": "工资单管理",
+          "subtools": []
+        },
+        {
+          "name": "plan",
+          "description": "薪酬方案管理",
+          "subtools": []
+        }
+      ]
+    }
+  ]
+}

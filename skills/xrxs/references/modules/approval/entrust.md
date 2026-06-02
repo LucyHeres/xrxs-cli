@@ -16,6 +16,9 @@
 用户说"查看委托设置/委托开关":
 - 设置 → `setting`
 
+用户说"委托时可以选哪些审批类型/委托可选审批":
+- 审批类型列表 → `type-list`
+
 关键区分: `entrust`(审批委托/代理，A 委托 B 代为审批) vs `role`(审批角色，如部门负责人/HR)
 
 ## 命令总览
@@ -75,6 +78,20 @@ Flags:
       --status int   状态: 0=关闭, 1=开启
 ```
 
+### 获取审批类型列表（委托用）
+
+```
+Usage:
+  xrxs approval entrust type-list [flags]
+Example:
+  xrxs approval entrust type-list
+  xrxs approval entrust type-list --format json
+Flags:
+  无必填参数
+```
+
+返回 key/value 对象，key 为设置 ID，value 为审批名称。
+
 ## 核心工作流
 
 ### 工作流 1: 设置出差期间的审批委托
@@ -107,8 +124,10 @@ xrxs approval entrust cancel --id <id>
 | 操作 | 从返回中提取 | 用于 |
 |------|-------------|------|
 | `list` | `id` | `cancel --id` |
-| `list` | `agentName` / 被委托人 | 向用户展示，确认操作目标 |
-| `list` | 委托状态 | 判断是否需要取消 |
+| `list` | `fromName` / `toName` | 向用户展示委托人和被委托人 |
+| `list` | `flowName` | 委托关联的审批类型 |
+| `list` | `startDate` / `endDate` / `status` | 判断委托是否在有效期 |
+| `type-list` | `key` / `value` | `create` 时选择审批类型 |
 
 ## 注意事项
 
@@ -120,5 +139,5 @@ xrxs approval entrust cancel --id <id>
 
 ## 相关模块
 
-- [approval-role](./approval-role.md) — 审批角色管理（注意区分角色 vs 委托）
-- [approval-list](./approval-list.md) — 审批列表查询与操作
+- [role](./role.md) — 审批角色管理（注意区分角色 vs 委托）
+- [list](./list.md) — 审批列表查询与操作

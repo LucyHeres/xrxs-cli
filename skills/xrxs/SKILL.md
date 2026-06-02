@@ -112,12 +112,13 @@ Step 3 → 加 --yes 执行命令
 | 模块 | 命令入口 | 用途 |
 |------|----------|------|
 | 认证 | `xrxs auth` | 登录/退出/状态 |
-| 审批列表 | `xrxs approval list` | 查询审批记录、通过/驳回/转交/撤销/催办/导出 |
-| 审批详情 | `xrxs approval detail` | 查看审批实例详情、流转路径、打印、编辑历史 |
-| 审批管理 | `xrxs approval manage` | 管理审批类型配置、审批分组 |
-| 审批角色 | `xrxs approval role` | 审批角色 CRUD |
+| 审批列表 | `xrxs approval list` | 查询审批记录、通过/驳回/转交/撤销/催办/导出/加签/退回 |
+| 审批详情 | `xrxs approval detail` | 查看审批实例详情、流转路径、打印、编辑历史、增编 |
+| 审批管理 | `xrxs approval manage` | 管理审批类型配置、审批分组、流程复制、发起范围 |
+| 审批角色 | `xrxs approval role` | 审批角色 CRUD、部门链路查询 |
 | 审批委托 | `xrxs approval entrust` | 审批委托/代理管理 |
-| 证明打印 | `xrxs approval proof` | 证明与打印 |
+| 证明打印 | `xrxs approval proof` | 证明快照、开具记录、打印设置 |
+| 离职交接 | `xrxs approval dismiss-handover` | 交接方案管理、交接审批操作 |
 
 ## 典型用法
 
@@ -162,12 +163,13 @@ xrxs approval list approve --sid <sid> --comment "同意"
 - [references/global-reference.md](references/global-reference.md) — 全局参考（认证、环境变量、全局 flag、输出格式）
 - [references/intent-guide.md](references/intent-guide.md) — 意图路由指南（常见意图路由表 + 易混淆命令成对区分 + 典型混淆场景详解）
 - [references/error-codes.md](references/error-codes.md) — 错误码说明与排查流程
-- [references/modules/approval-list.md](references/modules/approval-list.md) — 审批列表查询与操作
-- [references/modules/approval-detail.md](references/modules/approval-detail.md) — 审批详情
-- [references/modules/approval-manage.md](references/modules/approval-manage.md) — 审批类型管理（含 list vs list-groups 区分）
-- [references/modules/approval-role.md](references/modules/approval-role.md) — 审批角色
-- [references/modules/approval-entrust.md](references/modules/approval-entrust.md) — 审批委托
-- [references/modules/approval-proof.md](references/modules/approval-proof.md) — 证明与打印
+- [references/modules/approval/list.md](references/modules/approval/list.md) — 审批列表查询与操作
+- [references/modules/approval/detail.md](references/modules/approval/detail.md) — 审批详情
+- [references/modules/approval/manage.md](references/modules/approval/manage.md) — 审批类型管理（含 list vs list-groups 区分）
+- [references/modules/approval/role.md](references/modules/approval/role.md) — 审批角色
+- [references/modules/approval/entrust.md](references/modules/approval/entrust.md) — 审批委托
+- [references/modules/approval/proof.md](references/modules/approval/proof.md) — 证明与打印
+- [references/modules/approval/dismiss-handover.md](references/modules/approval/dismiss-handover.md) — 离职交接管理
 
 ## 扩展
 

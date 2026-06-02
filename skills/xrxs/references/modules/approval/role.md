@@ -25,6 +25,9 @@
 用户说"这个角色在哪些审批里用到了":
 - 使用情况 → `usage --role-id <id>`
 
+用户说"查一下这些员工的部门链路/员工属于哪些部门":
+- 部门链路 → `dept-tips --employee-ids <ids>`
+
 关键区分: `role`(审批角色，如部门负责人/HR) vs `entrust`(审批委托/代理，A 委托 B 代为审批)
 
 ## 命令总览
@@ -106,6 +109,17 @@ Flags:
       --role-id string   角色 ID（必传）
 ```
 
+### 查询部门链路
+
+```
+Usage:
+  xrxs approval role dept-tips [flags]
+Example:
+  xrxs approval role dept-tips --employee-ids '["id1","id2"]'
+Flags:
+      --employee-ids string   员工 ID 列表 JSON 数组（必传）
+```
+
 ## 核心工作流
 
 ### 工作流 1: 创建并配置审批角色
@@ -147,5 +161,5 @@ xrxs approval role usage --role-id <id> --format json
 
 ## 相关模块
 
-- [approval-entrust](./approval-entrust.md) — 审批委托管理（注意区分角色 vs 委托）
-- [approval-manage](./approval-manage.md) — 审批类型管理（角色在审批流程设置中使用）
+- [entrust](./entrust.md) — 审批委托管理（注意区分角色 vs 委托）
+- [manage](./manage.md) — 审批类型管理（角色在审批流程设置中使用）
