@@ -4,24 +4,30 @@
 
 ## 安装
 
-推荐从 **GitHub Release** 安装（安装脚本与二进制为同一版本）：
-
-**macOS / Linux**
+**macOS / Linux**（推荐 Release 安装包，不要用 `raw.githubusercontent.com`，国内易超时）：
 
 ```bash
-curl -fsSL https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh | sh
+curl -fsSL --connect-timeout 30 --max-time 300 \
+  https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh | sh
+```
+
+**国内网络较慢时**（安装脚本与二进制均走镜像）：
+
+```bash
+curl -fsSL --connect-timeout 30 --max-time 300 \
+  "https://gh-proxy.org/https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.sh" | sh
+```
+
+或已下载脚本后：
+
+```bash
+XRXS_GITHUB_PROXY=https://gh-proxy.org/ sh install.sh
 ```
 
 **Windows PowerShell**
 
 ```powershell
 irm https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.ps1 | iex
-```
-
-若需使用仓库 `master` 分支上的安装脚本（仍会下载最新 Release 二进制）：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/LucyHeres/xrxs-cli/master/scripts/install.sh | sh
 ```
 
 安装完成后，打开新终端窗口即可使用。
