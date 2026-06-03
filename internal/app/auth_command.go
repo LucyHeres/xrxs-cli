@@ -157,6 +157,13 @@ func authLoginRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("保存会话: %w", err)
 	}
 
+	// 保存 base-url 到 config.json，供后续命令无需每次传 --base-url
+	configPath := resolveConfigPath(cmd)
+	cfg := &Config{BaseURL: baseURL}
+	if saveErr := SaveConfig(configPath, cfg); saveErr != nil {
+		fmt.Fprintf(os.Stderr, "警告: 保存配置失败: %v\n", saveErr)
+	}
+
 	fmt.Println("登录成功！")
 	return nil
 }
