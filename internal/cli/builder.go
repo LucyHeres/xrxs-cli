@@ -98,8 +98,11 @@ func (b *Builder) buildLeaf(t *schema.Tool) *cobra.Command {
 		case "int":
 			def := 0
 			if p.Default != nil {
-				if n, ok := p.Default.(float64); ok {
-					def = int(n)
+				switch v := p.Default.(type) {
+				case float64:
+					def = int(v)
+				case string:
+					fmt.Sscanf(v, "%d", &def)
 				}
 			}
 			cmd.Flags().Int(flagName, def, p.Description)
