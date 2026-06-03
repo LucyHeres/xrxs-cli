@@ -4,6 +4,8 @@
 
 ## 安装
 
+推荐从 **GitHub Release** 安装（安装脚本与二进制为同一版本）：
+
 **macOS / Linux**
 
 ```bash
@@ -14,6 +16,12 @@ curl -fsSL https://github.com/LucyHeres/xrxs-cli/releases/latest/download/instal
 
 ```powershell
 irm https://github.com/LucyHeres/xrxs-cli/releases/latest/download/install.ps1 | iex
+```
+
+若需使用仓库 `master` 分支上的安装脚本（仍会下载最新 Release 二进制）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/LucyHeres/xrxs-cli/master/scripts/install.sh | sh
 ```
 
 安装完成后，打开新终端窗口即可使用。
